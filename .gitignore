@@ -1,0 +1,9 @@
+# .gitignore file 
+
+# Token sensibili
+.env
+
+# Cartelle/File ambiente python
+__pycache__/
+venv/
+*.pyc

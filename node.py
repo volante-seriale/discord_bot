@@ -1,36 +1,77 @@
 import os
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from dotenv import load_dotenv
+from datetime import datetime, timedelta, timezone
 
-#1. Load the token
+# --- Load the token ---
 load_dotenv()
 Token = os.getenv('BOT_TOKEN')
 
 if Token is None:
     print("ERRORE FATALE: Token non trovato. Controlla il file .env.")
     exit()
-#2. Configure Intents
+    
+# --- Configure Intents ---
 intents = discord.Intents.all()
-
-#3. Create Bot Instance
 bot = commands.Bot(command_prefix='/', intents=intents)
 
-#4. Event listener
+# --- Definizione del Tempo per il Kick ---
+Kick_Timeout = timedelta(hours=48)
+Current_Timezone = timezone.utc
+
+# --- Background task ---
+@tasks.loop(minutes=60)
+async def check_unassigned_roles():
+    time_limit = datetime.now(Current_Timezone) - Kick_Timeout
+    
+    for guild in bot.guilds:
+        bot_member = guild.get_member(bot.user.id)
+        if not bot_member or not bot_member.guild_permissions.kick_members:
+            print(f"The bot can't kick from '{guild.name}'")
+            continue
+        
+        async for member in guild.fetch_members(limit=None):
+            #Ignora bot e owner nel server
+            if member.bot or member == guild.owner or member == bot_member:
+                continue
+            #Controlla se member ha altri ruoli oltre @everyone all'interno della guild
+            has_only_everyone_role = len(member.roles) <= 1
+            #Controlla se le 48hrs son passate | member.joined_at conosce la timezone in UTC
+            if has_only_everyone_role and member.joined_at < time_limit:
+                try:
+                    #Tenta di kickare
+                    print(f"Kicking {member.name} ({member.id}) from server '{guild.name}'")
+                    await member.kick(reason="Automatic: No roles after 48h")
+                except discord.Forbidden:
+                    print(f"Error: I can't kick {member.name} from the server '{guild.name}'")
+                except Exception as e:
+                    print(f"Error while kicking {member.name}: {e}")
+
+# --- Event listener ---
 @bot.event
 async def on_ready():
+    #bot log-in
     await bot.tree.sync()
     print(f'Bot is logged in as {bot.user.name}')
     print("slash command synced globally")
     print("--------------")
+    
+    if not check_unassigned_roles.is_running():
+        check_unassigned_roles.start()
+    
+    print("Background task started.")
+    print("--------------")
 
-#5. Slash command: /ping
+    
+                    
+# --- Slash command: /ping ---
 @bot.tree.command(name="ping", description="Tests the bot's responsiveness,")
 async def ping_command(interaction: discord.Interaction):
-    latency_ms = round(bot.latency)
-    await interaction.response.send_message(f'**Pong** | Current latency: **{latency_ms}**')
+    latency_ms = round(bot.latency * 1000)
+    await interaction.response.send_message(f'**Pong** | Current latency: **{latency_ms}ms**')
 
-#6. Slash command: /serverinfo
+# --- Slash command: /serverinfo ---
 @bot.tree.command(name="serverinfo", description="Displays basic information about the server.")
 async def server_info_command(interaction: discord.Interaction):
     guild = interaction.guild
@@ -51,5 +92,5 @@ async def server_info_command(interaction: discord.Interaction):
 
     #3. Send embed
     await interaction.response.send_message(embed=embed)
-#7. Run
+# --- Run ---
 bot.run(Token)

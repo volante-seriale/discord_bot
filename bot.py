@@ -4,7 +4,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
 
-# --- Load the token ---
+#   ---- Load the token ----
 load_dotenv()
 Token = os.getenv('BOT_TOKEN')
 
@@ -12,18 +12,18 @@ if Token is None:
     print("ERRORE FATALE: Token non trovato. Controlla il file .env.")
     exit()
     
-# --- Configure Intents ---
+#   ---- Configure Intents ----
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/', intents=intents)
 
-# --- Config bot.owner_id ---
+#   ---- Config bot.owner_id ----
 bot.owner_id = 943923205381443604
 
-# --- Definizione del Tempo per il Kick ---
+#   ---- Definizione del Tempo per il Kick ----
 Kick_Timeout = timedelta(hours=48)
 Current_Timezone = timezone.utc
 
-# --- Funzione per caricare i Cogs (AGGIUNTA) ---
+#   ---- Funzione per caricare i Cogs (AGGIUNTA) ----
 async def load_extensions():
     # Assicurati che la cartella 'data' esista per levels.json
     if not os.path.exists('data'):
@@ -37,39 +37,13 @@ async def load_extensions():
         print(f"ERRORE nel caricamento del COG: Leveling\n{e}")
 
 
-# --- Background task ---
-@tasks.loop(minutes=60)
-async def check_unassigned_roles():
-    time_limit = datetime.now(Current_Timezone) - Kick_Timeout
-    
-    for guild in bot.guilds:
-        bot_member = guild.get_member(bot.user.id)
-        if not bot_member or not bot_member.guild_permissions.kick_members:
-            print(f"The bot can't kick from '{guild.name}'")
-            continue
-        
-        async for member in guild.fetch_members(limit=None):
-            #Ignores bot and owner in the server
-            if member.bot or member == guild.owner or member == bot_member:
-                continue
-            #Checks if has other role than @everyone
-            has_only_everyone_role = len(member.roles) <= 1
-            #Checks if the 48hrs have passed
-            if has_only_everyone_role and member.joined_at < time_limit:
-                try:
-                    #Tries kick
-                    print(f"Kicking {member.name} ({member.id}) from server '{guild.name}'")
-                    await member.kick(reason="Automatic: No roles after 48h")
-                except discord.Forbidden:
-                    print(f"Error: I can't kick {member.name} from the server '{guild.name}'")
-                except Exception as e:
-                    print(f"Error while kicking {member.name}: {e}")
 
-# --- Event listener ---
+#   ---- Event listener ----
 @bot.event
 async def on_ready():
     await load_extensions()
     print(f'Bot is logged in as {bot.user.name}')
+    print("--------------")
     print("Extensions loaded")
     print("--------------")
     
@@ -83,20 +57,14 @@ async def on_ready():
     await bot.tree.sync()
     print("slash command synced globally")
     print("--------------")
-
-@bot.event
-async def on_disconnect():
-    """
-    Called when the bot loses connection to Discord (e.g., during bot shutdown or API issues).
-    """
-    print("⚠️ AVVISO: Bot disconnesso dall'API di Discord.")   
-# --- Slash command: /ping ---
+ 
+#   ---- Slash command: /ping ----
 @bot.tree.command(name="ping", description="Tests the bot's responsiveness,")
 async def ping_command(interaction: discord.Interaction):
     latency_ms = round(bot.latency * 1000)
     await interaction.response.send_message(f'**Pong** | Current latency: **{latency_ms}ms**')
 
-# --- Slash command: /serverinfo ---
+#   ---- Slash command: /serverinfo ----
 @bot.tree.command(name="serverinfo", description="Displays basic information about the server.")
 async def server_info_command(interaction: discord.Interaction):
     guild = interaction.guild
@@ -132,7 +100,7 @@ async def server_info_command(interaction: discord.Interaction):
     #4. Send embed
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
-# --- Admin command to globaly sync ---
+#   ---- Admin command to globaly sync ----
 @bot.hybrid_command(name="sync", description="Forces the slash commands syncronization.")
 @commands.is_owner() 
 async def sync_commands(ctx: commands.Context):
@@ -156,5 +124,33 @@ async def sync_commands(ctx: commands.Context):
         await initial_message.edit(content=f"❌ Error during sync: {e}")
         print(f"Errore di sincronizzazione: {e}")
         
-# --- Run ---
+#   ---- Background task ----
+@tasks.loop(minutes=60)
+async def check_unassigned_roles():
+    time_limit = datetime.now(Current_Timezone) - Kick_Timeout
+    
+    for guild in bot.guilds:
+        bot_member = guild.get_member(bot.user.id)
+        if not bot_member or not bot_member.guild_permissions.kick_members:
+            print(f"The bot can't kick from '{guild.name}'")
+            continue
+        
+        async for member in guild.fetch_members(limit=None):
+            #Ignores bot and owner in the server
+            if member.bot or member == guild.owner or member == bot_member:
+                continue
+            #Checks if has other role than @everyone
+            has_only_everyone_role = len(member.roles) <= 1
+            #Checks if the 48hrs have passed
+            if has_only_everyone_role and member.joined_at < time_limit:
+                try:
+                    #Tries kick
+                    print(f"Kicking {member.name} ({member.id}) from server '{guild.name}'")
+                    await member.kick(reason="Automatic: No roles after 48h")
+                except discord.Forbidden:
+                    print(f"Error: I can't kick {member.name} from the server '{guild.name}'")
+                except Exception as e:
+                    print(f"Error while kicking {member.name}: {e}")
+        
+#   ---- Run ----
 bot.run(Token)

@@ -26,10 +26,6 @@ MAX_XP_TOTAL = LEVEL_THRESHOLDS[MAX_LEVEL]
 LEVEL_UP_CHANNEL_ID = 1439200176408363059 # will be overwritten
 
 def get_level_info(total_xp: int) -> tuple[int,int]:
-    """
-    Calculates the actual level and needed xp to level-up
-    Returns: (actual_level, xp_needed)
-    """
     actual_level = 0
     xp_needed = 0
     for level, threshold_xp in LEVEL_THRESHOLDS.items():
@@ -51,7 +47,7 @@ class Leveling(commands.Cog):
         self.config_data: Dict[str, Any] = self._load_config_data()
     
     
-#   ---- Gestione Database(JSON) ----
+#   ---- Database(JSON) ----
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
         guild_id = str(guild.id)
@@ -60,13 +56,13 @@ class Leveling(commands.Cog):
         if guild_id in self.level_data:
             del self.level_data[guild_id]
             self._save_level_data()
-            print(f"Cleanup: Livellamento dati rimossi per la gilda {guild.name} ({guild_id}).")
+            print(f"Cleanup: level data remove for {guild.name} ({guild_id}).")
 
         # Rimuove i dati di configurazione per quella gilda
         if guild_id in self.config_data:
             del self.config_data[guild_id]
             self._save_config_data()
-            print(f"Cleanup: Configurazione dati rimossa per la gilda {guild.name} ({guild_id}).")
+            print(f"Cleanup: data config removed for {guild.name} ({guild_id}).")
     #Xp load
     def _load_level_data(self) -> Dict[str, Dict[str, Any]]:
         try:
@@ -150,7 +146,7 @@ class Leveling(commands.Cog):
                 level_up_channel = message.guild.get_channel(level_up_channel_id)
                 target_channel = level_up_channel if level_up_channel else message.channel
             
-            congrats_message = f"**Congrats, {message.author.mention}!** You reached the **Level {new_level}**!"
+            congrats_message = f"**Congrats, {message.author.mention}!** \nYou reached the **Level {new_level}** "
             
             if new_level in ROLE_ASSIGNMENTS:
                 role_id = ROLE_ASSIGNMENTS[new_level]
@@ -168,7 +164,7 @@ class Leveling(commands.Cog):
                             if prev_role and prev_role in message.author.roles:
                                 await message.author.remove_roles(prev_role, reason="Removed previous level-role")
 
-                        congrats_message +=f"and earned the role {role.name}"
+                        congrats_message +=f"and earned the role **{role.name}**"
                         
                     except discord.Forbidden:
                         print(f"Error: Missing permission to add {role.name} on the server {message.guild.name}.")
@@ -201,7 +197,7 @@ class Leveling(commands.Cog):
         user_id = str(target.id)
         
         if guild_id not in self.level_data or user_id not in self.level_data[guild_id]:
-            await ctx.send(f"**{target.display_name}** hasn't ernead xp in this server")
+            await ctx.send(f"**{target.mention}** hasn't ernead xp in this server")
             return
         
         user_data = self.level_data[guild_id][user_id]
@@ -229,11 +225,10 @@ class Leveling(commands.Cog):
         xp_needed_total_in_level = xp_needed - xp_prev_level if xp_needed > 0 else 1
         
         #Calculates the advancement percentage
-        # Uso xp_needed_total_in_level for right progression in the actual level
         progress = (xp_in_actual_level / xp_needed_total_in_level) * 100 if xp_needed_total_in_level > 0 else 100
         progress_bar_length = 10
         filled_block = int(progress * progress_bar_length // 100)
-        progress_bar = ":blue_square:" * filled_block + ":black_large_square:" * (progress_bar_length - filled_block)
+        progress_bar = "🟦" * filled_block + "⬛" * (progress_bar_length - filled_block)
         
         embed = discord.Embed(
             title=f"Level and Xp {target.display_name}",
@@ -254,7 +249,7 @@ class Leveling(commands.Cog):
         await ctx.send(embed=embed)
         
 
-#   ---- New Slash Commands: /config
+#   ---- New Slash Commands: /config ----
     @commands.hybrid_command(name="config-show", description="Displays current configuration")
     @commands.has_permissions(administrator=True)
     async def show_config(self, ctx: commands.Context):
@@ -285,7 +280,7 @@ class Leveling(commands.Cog):
             role_mention = f"<@{role_id}>" if channel_id else "Not configured"
             role_info.append(f"Level **{level}**: {role_mention}")
         embed.add_field(name="Level Roles", value="\n".join(role_info), inline=False)
-        await ctx.send(embed=embed, ephemeral=True)
+        await ctx.send(embed=embed, ephemeral=False)
         
     @commands.hybrid_command(name="config-channel", description="Sets the channel for level-up notifications.")
     @commands.has_permissions(administrator=True)
@@ -298,26 +293,25 @@ class Leveling(commands.Cog):
         
         await ctx.send(f"✅ Level-up notifications channel set to **{channel.mention}**.", ephemeral=True)
 
-
-    @commands.hybrid_command(name="config-role", description="Assigns a role to a specific level.")
+    @commands.hybrid_command(name="config-role", description="Assigns a role to a level.")
     @commands.has_permissions(administrator=True)
     async def configure_role(self, ctx: commands.Context, level: int, role: discord.Role):
         guild_id = str(ctx.guild.id)
         config = self.get_guild_config(guild_id)
         
         if level < 1 or level > MAX_LEVEL:
-            return await ctx.send(f"❌ Livello non valido. Deve essere compreso tra **1** e **{MAX_LEVEL}**.", ephemeral=True)
+            return await ctx.send(f"❌ Level not valid. Must be betwen **1** e **{MAX_LEVEL}**.", ephemeral=True)
         
         level_key = str(level)
         
         # Controlla se il ruolo è @everyone (che non dovrebbe essere assegnato/rimosso)
         if role.id == ctx.guild.id: # L'ID della @everyone è uguale all'ID della Gilda
-            return await ctx.send("❌ Non puoi assegnare il ruolo **@everyone**.", ephemeral=True)
+            return await ctx.send("❌ Can't assign **@everyone**.", ephemeral=True)
         
         config["role_assignments"][level_key] = role.id
         self._save_config_data()
         
-        await ctx.send(f"✅ Ruolo per il **Livello {level}** impostato su **{role.mention}**.", ephemeral=True)
+        await ctx.send(f"✅ Role for the **Level {level}** set to **{role.mention}**.", ephemeral=True)
         
     @commands.hybrid_command(name="config-invite", description="Sets the server's permanent invite link for /serverinfo.")
     @commands.has_permissions(administrator=True)
@@ -327,13 +321,79 @@ class Leveling(commands.Cog):
         
         # Semplice validazione del link (potrebbe essere più robusta, ma è un buon inizio)
         if not link.startswith("http") and not link.startswith("discord.gg/"):
-            return await ctx.send("❌ Link non valido. Assicurati che sia un link completo (es. `https://discord.gg/abc`)", ephemeral=True)
+            return await ctx.send("❌ Invalid link. Make sure is a link (es. `https://discord.gg/abc`)", ephemeral=True)
         
         config["invite_link"] = link
         self._save_config_data()
         
-        await ctx.send(f"✅ Server invite link impostato: ```\n{link}\n```", ephemeral=True)
+        await ctx.send(f"✅ Server invite link set to: ```\n{link}\n```", ephemeral=True)
+        
+    @commands.hybrid_command(name="config-all", description="Configure all leveling settings (channel, invite, and level roles).")
+    @commands.has_permissions(administrator=True)
+    async def configure_all(
+        self, 
+        ctx: commands.Context, 
+        level_up_channel: Optional[discord.TextChannel] = None, 
+        invite_link: Optional[str] = None, 
+        role_level_1: Optional[discord.Role] = None,  # Ruolo per Livello 1
+        role_level_2: Optional[discord.Role] = None,  # Ruolo per Livello 2
+        role_level_3: Optional[discord.Role] = None,  # Ruolo per Livello 3
+        role_level_4: Optional[discord.Role] = None,  # Ruolo per Livello 4
+        role_level_5: Optional[discord.Role] = None   # Ruolo per Livello 5 (MAX)
+    ):
+        if ctx.guild is None:
+            return await ctx.send("This command must be used in a server", ephemeral=True)
+        
+        guild_id = str(ctx.guild.id)
+        config = self.get_guild_config(guild_id)
+        updated_settings = []
+        
+        # Map role value to levels
+        role_params = {
+            1: role_level_1, 
+            2: role_level_2, 
+            3: role_level_3, 
+            4: role_level_4, 
+            5: role_level_5
+        }
+        
+        # 1. Config level-up channel
+        if level_up_channel is not None:
+            config["level_up_channel_id"] = level_up_channel.id
+            updated_settings.append(f"Channel level-up set to: **{level_up_channel.mention}**")
+        
+        # 2. Config invite link
+        if invite_link is not None:
+            if not invite_link.startswith("http") and not invite_link.startswith("discord.gg/"):
+                 return await ctx.send("❌ Invalid link. Must start with 'http' or 'discord.gg/'.", ephemeral=True)
+                 
+            config["invite_link"] = invite_link
+            updated_settings.append(f"Invite link set to: `{invite_link}`")
             
-#Setup to load Cog
+        # 3. Config level-role
+        for level, role in role_params.items():
+            if role is not None:
+                # Check on @everyone
+                if role.id == ctx.guild.id:
+                    return await ctx.send(f"❌ Can't assign the **@everyone** role at level {level}.", ephemeral=True)
+
+                level_key = str(level)
+                config["role_assignments"][level_key] = role.id
+                updated_settings.append(f"Role for the **{level}** set: **{role.mention}**")
+            
+        # 4. Save patched config
+        if updated_settings:
+            self._save_config_data()
+            response_message = (
+                "✅ Config realoded:\n" + 
+                "\n".join(updated_settings) +
+                "\n\nUse **/config-show** to see the actual config."
+            )
+        else:
+            response_message = "⚠️ No value for the patch."
+            
+        await ctx.send(response_message, ephemeral=True)
+        
+#   ---- Setup to load Cog ----
 async def setup(bot: commands.Bot):
     await bot.add_cog(Leveling(bot))

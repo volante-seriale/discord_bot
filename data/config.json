@@ -3,22 +3,11 @@
         "level_up_channel_id": 1439331387244023808,
         "invite_link": "https://discord.gg/qSFdR7S4",
         "role_assignments": {
-            "1": null,
-            "2": null,
-            "3": null,
-            "4": null,
-            "5": null
-        }
-    },
-    "1439302930930073732": {
-        "level_up_channel_id": null,
-        "invite_link": null,
-        "role_assignments": {
-            "1": null,
-            "2": null,
-            "3": null,
-            "4": null,
-            "5": null
+            "1": 1439044854477750272,
+            "2": 1439044982836039852,
+            "3": 1439045020761063646,
+            "4": 1439044973642256384,
+            "5": 1439045087848829080
         }
     }
 }

@@ -124,25 +124,26 @@ async def server_info_command(interaction: discord.Interaction):
         embed.add_field(name="Invite Link", value=f"({invite_link})", inline=False)
 
     #4. Send embed
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
-# --- NUOVO Comando Admin per forzare la Sincronizzazione Slash (CORRETTO) ---
-# Usiamo il decoratore bot.hybrid_command per registrarlo correttamente
+# --- Admin command to globaly sync ---
 @bot.hybrid_command(name="sync", description="Forces the slash commands syncronization.")
 @commands.is_owner() 
 async def sync_commands(ctx: commands.Context):
     """Syncs slash commands globaly."""
-    
-    # Questo controllo non è strettamente necessario se usi @commands.is_owner(),
-    # ma assicura che il bot sappia chi è il proprietario.
+
     if ctx.author.id != ctx.bot.owner_id:
         return await ctx.send("You're not the bot owner", ephemeral=True)
+    
+    #Immediat response at the interaction slash
+    await ctx.defer(ephemeral=True)
     
     try:
         # Usiamo ctx.bot.tree.sync() per sincronizzare tutti i comandi slash
         await ctx.bot.tree.sync() 
-        await ctx.send("✅ Slash command synced successful.", ephemeral=True)
+        await ctx.followup.edit_message(ctx.interaction.id, content="✅ Slash command synced successful.")
     except Exception as e:
-        await ctx.send(f"❌ Error during sync: {e}", ephemeral=True)    
+        await ctx.followup.edit_message(ctx.interaction.id, content=f"❌ Error during sync: {e}")
+
 # --- Run ---
 bot.run(Token)

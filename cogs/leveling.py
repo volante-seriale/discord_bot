@@ -52,7 +52,21 @@ class Leveling(commands.Cog):
     
     
 #   ---- Gestione Database(JSON) ----
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild: discord.Guild):
+        guild_id = str(guild.id)
 
+        # Rimuove i dati di livellamento per quella gilda
+        if guild_id in self.level_data:
+            del self.level_data[guild_id]
+            self._save_level_data()
+            print(f"Cleanup: Livellamento dati rimossi per la gilda {guild.name} ({guild_id}).")
+
+        # Rimuove i dati di configurazione per quella gilda
+        if guild_id in self.config_data:
+            del self.config_data[guild_id]
+            self._save_config_data()
+            print(f"Cleanup: Configurazione dati rimossa per la gilda {guild.name} ({guild_id}).")
     #Xp load
     def _load_level_data(self) -> Dict[str, Dict[str, Any]]:
         try:
@@ -240,14 +254,9 @@ class Leveling(commands.Cog):
         await ctx.send(embed=embed)
         
 
-#   ---- New Slash Command: /configure
-
-    @commands.hybrid_group(name="configure", description="Configure the leveling system and the server invete link.", fallback="show_config")
-    @commands.has_permissions(administrator=True) #Only admin can use this command
-    async def configure(self, ctx : commands.Context):
-        pass #If user just types /configure
-
-    @configure.command(name="show", description="Displays current leveling configuration")
+#   ---- New Slash Commands: /config
+    @commands.hybrid_command(name="config-show", description="Displays current configuration")
+    @commands.has_permissions(administrator=True)
     async def show_config(self, ctx: commands.Context):
         if ctx.guild is None:
             await ctx.send("This command must be sent in a server")
@@ -275,10 +284,10 @@ class Leveling(commands.Cog):
         for level, role_id in config["role_assignments"].items():
             role_mention = f"<@{role_id}>" if channel_id else "Not configured"
             role_info.append(f"Level **{level}**: {role_mention}")
-        embed.add_field(name="Level Roles", value="/n".join(role_info), inline=False)
+        embed.add_field(name="Level Roles", value="\n".join(role_info), inline=False)
         await ctx.send(embed=embed, ephemeral=True)
         
-    @configure.command(name="channel", description="Sets the channel for level-up notifications.")
+    @commands.hybrid_command(name="config-channel", description="Sets the channel for level-up notifications.")
     @commands.has_permissions(administrator=True)
     async def configure_channel(self, ctx: commands.Context, channel: discord.TextChannel):
         guild_id = str(ctx.guild.id)
@@ -290,7 +299,7 @@ class Leveling(commands.Cog):
         await ctx.send(f"✅ Level-up notifications channel set to **{channel.mention}**.", ephemeral=True)
 
 
-    @configure.command(name="role", description="Assigns a role to a specific level.")
+    @commands.hybrid_command(name="config-role", description="Assigns a role to a specific level.")
     @commands.has_permissions(administrator=True)
     async def configure_role(self, ctx: commands.Context, level: int, role: discord.Role):
         guild_id = str(ctx.guild.id)
@@ -310,7 +319,7 @@ class Leveling(commands.Cog):
         
         await ctx.send(f"✅ Ruolo per il **Livello {level}** impostato su **{role.mention}**.", ephemeral=True)
         
-    @configure.command(name="invite", description="Sets the server's permanent invite link for /serverinfo.")
+    @commands.hybrid_command(name="config-invite", description="Sets the server's permanent invite link for /serverinfo.")
     @commands.has_permissions(administrator=True)
     async def configure_invite(self, ctx: commands.Context, link: str):
         guild_id = str(ctx.guild.id)

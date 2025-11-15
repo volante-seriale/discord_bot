@@ -16,6 +16,9 @@ if Token is None:
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/', intents=intents)
 
+# --- Config bot.owner_id ---
+bot.owner_id = 943923205381443604
+
 # --- Definizione del Tempo per il Kick ---
 Kick_Timeout = timedelta(hours=48)
 Current_Timezone = timezone.utc
@@ -46,15 +49,15 @@ async def check_unassigned_roles():
             continue
         
         async for member in guild.fetch_members(limit=None):
-            #Ignora bot e owner nel server
+            #Ignores bot and owner in the server
             if member.bot or member == guild.owner or member == bot_member:
                 continue
-            #Controlla se member ha altri ruoli oltre @everyone all'interno della guild
+            #Checks if has other role than @everyone
             has_only_everyone_role = len(member.roles) <= 1
-            #Controlla se le 48hrs son passate | member.joined_at conosce la timezone in UTC
+            #Checks if the 48hrs have passed
             if has_only_everyone_role and member.joined_at < time_limit:
                 try:
-                    #Tenta di kickare
+                    #Tries kick
                     print(f"Kicking {member.name} ({member.id}) from server '{guild.name}'")
                     await member.kick(reason="Automatic: No roles after 48h")
                 except discord.Forbidden:
@@ -80,10 +83,7 @@ async def on_ready():
     await bot.tree.sync()
     print("slash command synced globally")
     print("--------------")
-    
-
-    
-                    
+       
 # --- Slash command: /ping ---
 @bot.tree.command(name="ping", description="Tests the bot's responsiveness,")
 async def ping_command(interaction: discord.Interaction):
@@ -97,19 +97,52 @@ async def server_info_command(interaction: discord.Interaction):
     if not guild:
         await interaction.response.send_message("This command must be run inside a Discord server.")
         return
+    
+    #Obtains the configuration from cog/leveling.py
+    leveling_cog = bot.get_cog("Leveling")
+    invite_link = None
+    if leveling_cog:
+        guild_id = str(guild.id)
+        # Accedi alla funzione di configurazione per recuperare i dati
+        guild_config = leveling_cog.get_guild_config(guild_id) 
+        invite_link = guild_config.get("invite_link")
+        
     embed = discord.Embed(
         title=f"Infos about {guild.name}",
         color=discord.Color.blue()
     )
-    #1. owner/members count
+    #1. Owner/members count
     embed.add_field(name="Owner", value=guild.owner.mention, inline=True)
     embed.add_field(name="Member count", value=guild.member_count, inline=True)
     
-    #2. server id and creation date
+    #2. Server id and creation date
     embed.add_field(name="Server ID", value=guild.id, inline=False)
     embed.add_field(name="Created on", value=f"<t:{int(guild.created_at.timestamp())}>", inline=False)
+    
+    #3. Invite link
+    if invite_link:
+        embed.add_field(name="Invite Link", value=f"({invite_link})", inline=False)
 
-    #3. Send embed
+    #4. Send embed
     await interaction.response.send_message(embed=embed)
+
+# --- NUOVO Comando Admin per forzare la Sincronizzazione Slash (CORRETTO) ---
+# Usiamo il decoratore bot.hybrid_command per registrarlo correttamente
+@bot.hybrid_command(name="sync", description="Forces the slash commands syncronization.")
+@commands.is_owner() 
+async def sync_commands(ctx: commands.Context):
+    """Syncs slash commands globaly."""
+    
+    # Questo controllo non è strettamente necessario se usi @commands.is_owner(),
+    # ma assicura che il bot sappia chi è il proprietario.
+    if ctx.author.id != ctx.bot.owner_id:
+        return await ctx.send("You're not the bot owner", ephemeral=True)
+    
+    try:
+        # Usiamo ctx.bot.tree.sync() per sincronizzare tutti i comandi slash
+        await ctx.bot.tree.sync() 
+        await ctx.send("✅ Slash command synced successful.", ephemeral=True)
+    except Exception as e:
+        await ctx.send(f"❌ Error during sync: {e}", ephemeral=True)    
 # --- Run ---
 bot.run(Token)

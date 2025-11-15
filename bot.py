@@ -20,6 +20,20 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 Kick_Timeout = timedelta(hours=48)
 Current_Timezone = timezone.utc
 
+# --- Funzione per caricare i Cogs (AGGIUNTA) ---
+async def load_extensions():
+    # Assicurati che la cartella 'data' esista per levels.json
+    if not os.path.exists('data'):
+        os.makedirs('data')
+        
+    try:
+        # Carica il Cog di livellamento (cogs/leveling.py)
+        await bot.load_extension("cogs.leveling")        
+        print("COG: Leveling caricato con successo.")
+    except Exception as e:
+        print(f"ERRORE nel caricamento del COG: Leveling\n{e}")
+
+
 # --- Background task ---
 @tasks.loop(minutes=60)
 async def check_unassigned_roles():
@@ -51,10 +65,9 @@ async def check_unassigned_roles():
 # --- Event listener ---
 @bot.event
 async def on_ready():
-    #bot log-in
-    await bot.tree.sync()
+    await load_extensions()
     print(f'Bot is logged in as {bot.user.name}')
-    print("slash command synced globally")
+    print("Extensions loaded")
     print("--------------")
     
     if not check_unassigned_roles.is_running():
@@ -62,6 +75,12 @@ async def on_ready():
     
     print("Background task started.")
     print("--------------")
+
+    #bot log-in
+    await bot.tree.sync()
+    print("slash command synced globally")
+    print("--------------")
+    
 
     
                     

@@ -83,7 +83,13 @@ async def on_ready():
     await bot.tree.sync()
     print("slash command synced globally")
     print("--------------")
-       
+
+@bot.event
+async def on_disconnect():
+    """
+    Called when the bot loses connection to Discord (e.g., during bot shutdown or API issues).
+    """
+    print("⚠️ AVVISO: Bot disconnesso dall'API di Discord.")   
 # --- Slash command: /ping ---
 @bot.tree.command(name="ping", description="Tests the bot's responsiveness,")
 async def ping_command(interaction: discord.Interaction):
@@ -131,19 +137,24 @@ async def server_info_command(interaction: discord.Interaction):
 @commands.is_owner() 
 async def sync_commands(ctx: commands.Context):
     """Syncs slash commands globaly."""
-
+    
+    # Check di Ownership
     if ctx.author.id != ctx.bot.owner_id:
-        return await ctx.send("You're not the bot owner", ephemeral=True)
-    
-    #Immediat response at the interaction slash
-    await ctx.defer(ephemeral=True)
-    
-    try:
-        # Usiamo ctx.bot.tree.sync() per sincronizzare tutti i comandi slash
-        await ctx.bot.tree.sync() 
-        await ctx.followup.edit_message(ctx.interaction.id, content="✅ Slash command synced successful.")
-    except Exception as e:
-        await ctx.followup.edit_message(ctx.interaction.id, content=f"❌ Error during sync: {e}")
+        return await ctx.send("You're not the bot owner", ephemeral=True) 
 
+    try:
+        initial_message = await ctx.send("⏳ Tentativo di sincronizzazione dei comandi slash in corso...", ephemeral=True) 
+    except Exception as e:
+        print(f"Errore nella risposta iniziale del comando sync: {e}")
+        return
+        
+    try:
+        synced = await ctx.bot.tree.sync() 
+        await initial_message.edit(content=f"✅ Slash command synced successful. **{len(synced)}** comandi trovati.")
+        
+    except Exception as e:
+        await initial_message.edit(content=f"❌ Error during sync: {e}")
+        print(f"Errore di sincronizzazione: {e}")
+        
 # --- Run ---
 bot.run(Token)

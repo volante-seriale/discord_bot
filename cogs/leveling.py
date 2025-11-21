@@ -105,7 +105,6 @@ class Leveling(commands.Cog):
         return self.config_data[guild_id]
     
 #   ---- Event listener: Xp assign ----
-
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot or message.guild is None or message.content.startswith(self.bot.command_prefix):
@@ -185,7 +184,6 @@ class Leveling(commands.Cog):
             
             
 #   ---- Slash Commands: /level ----
-    
     @commands.hybrid_command(name="level", description="show your actual level and xp")
     async def level_command(self, ctx: commands.Context, member: discord.Member = None):
         if ctx.guild is None:

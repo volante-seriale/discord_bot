@@ -9,7 +9,7 @@ load_dotenv()
 Token = os.getenv('BOT_TOKEN')
 
 if Token is None:
-    print("ERRORE FATALE: Token non trovato. Controlla il file .env.")
+    print("Fatal Error: Token not found. Check '.env' file.")
     exit()
     
 #   ---- Configure Intents ----
@@ -19,24 +19,28 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 #   ---- Config bot.owner_id ----
 bot.owner_id = 943923205381443604
 
-#   ---- Definizione del Tempo per il Kick ----
+#   ---- Definition of the time for the kick ----
 Kick_Timeout = timedelta(hours=48)
 Current_Timezone = timezone.utc
 
-#   ---- Funzione per caricare i Cogs (AGGIUNTA) ----
+#   ---- Fuction for loading Cogs ----
 async def load_extensions():
-    # Assicurati che la cartella 'data' esista per levels.json
+    # Checks for levels.json in the data/ directory
     if not os.path.exists('data'):
         os.makedirs('data')
         
     try:
-        # Carica il Cog di livellamento (cogs/leveling.py)
+        # Loads Cogs (cogs/leveling.py)
         await bot.load_extension("cogs.leveling")        
-        print("COG: Leveling caricato con successo.")
+        print("COG: Leveling loaded successfully.")
+        print("--------------")
+        # Loads Cogs (cogs/tempvoice.py)
+        await bot.load_extension("cogs.tempvoice")        
+        print("COG: TempVoice loaded successfully.")
+        print("--------------")
+
     except Exception as e:
-        print(f"ERRORE nel caricamento del COG: Leveling\n{e}")
-
-
+        print(f"Error while loading the cogs\n{e}")
 
 #   ---- Event listener ----
 @bot.event
@@ -98,7 +102,7 @@ async def server_info_command(interaction: discord.Interaction):
         embed.add_field(name="Invite Link", value=f"({invite_link})", inline=False)
 
     #4. Send embed
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.response.send_message(embed=embed, ephemeral=False)
 
 #   ---- Admin command to globaly sync ----
 @bot.hybrid_command(name="sync", description="Forces the slash commands syncronization.")
@@ -111,9 +115,9 @@ async def sync_commands(ctx: commands.Context):
         return await ctx.send("You're not the bot owner", ephemeral=True) 
 
     try:
-        initial_message = await ctx.send("⏳ Tentativo di sincronizzazione dei comandi slash in corso...", ephemeral=True) 
+        initial_message = await ctx.send("⏳ Trying to globaly sync slash commands...", ephemeral=True) 
     except Exception as e:
-        print(f"Errore nella risposta iniziale del comando sync: {e}")
+        print(f"Error in the first answer: {e}")
         return
         
     try:
@@ -123,7 +127,35 @@ async def sync_commands(ctx: commands.Context):
     except Exception as e:
         await initial_message.edit(content=f"❌ Error during sync: {e}")
         print(f"Errore di sincronizzazione: {e}")
+
+#   ---- Event listener for commands errors ----
+@bot.event
+async def on_command_error(ctx: commands.Context, error: commands.CommandError):
+    # Check for missing permissions (CheckFailure)
+    if isinstance(error, commands.CheckFailure):
         
+        # Check for NotOwner error
+        if isinstance(error, commands.NotOwner):
+            # Sends message to the user
+            await ctx.send(
+                "❌ **Access denied!** Only the bot owner can execute **/sync**. ",
+                ephemeral=True
+            )
+            # Logs the attempt for admin
+            print(f"{ctx.author.name} ({ctx.author.id}) tried to use /sync without being the owner.")
+        
+        # Can add other CheckFailure errors here
+        else:
+             await ctx.send(f"❌  **{error}**", ephemeral=True)
+
+        return # blocks further error handling
+        
+    # Every other error (es. CommandNotFound, BadArgument, ecc.)
+    if hasattr(ctx.command, 'qualified_name'):
+        print(f"Errore non gestito nel comando '{ctx.command.qualified_name}': {error}")
+    else:
+        print(f"Errore non gestito: {error}")
+
 #   ---- Background task ----
 @tasks.loop(minutes=60)
 async def check_unassigned_roles():

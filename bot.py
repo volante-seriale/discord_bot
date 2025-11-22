@@ -17,7 +17,8 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 #   ---- Config bot.owner_id ----
-bot.owner_id = 943923205381443604
+owner_id_int = int(os.getenv('BOT_OWNER_ID'))
+bot.owner_id = owner_id_int
 
 #   ---- Definition of the time for the kick ----
 Kick_Timeout = timedelta(hours=48)

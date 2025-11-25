@@ -5,7 +5,7 @@ from discord.ext import commands
 from typing import Dict, Any, Optional
 
 class Moderation(commands.Cog):
-    def __init__(selfm, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         if not os.path.exists('data'):
             os.makedirs('data')
@@ -27,13 +27,13 @@ class Moderation(commands.Cog):
             json.dump(self.config_data, f, indent=4)
             
     def get_guild_config(self, guild_id: int) -> Dict[str, Any]:
-        deafault_config = {
+        default_config = {
             "exit_channel_id": None
         }
         guild_id_str = str(guild_id)
         
         if guild_id_str not in self.config_data:
-            self.config_data[guild_id_str] = deafault_config
+            self.config_data[guild_id_str] = default_config
             self._save_config_data()
         return self.config_data[guild_id_str]
     

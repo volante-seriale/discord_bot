@@ -258,6 +258,14 @@ class Leveling(commands.Cog):
         guild_id = str(ctx.guild.id)
         config = self.get_guild_config(guild_id)
 
+        moderation_cog = self.bot.get_cog("Moderation")
+        if moderation_cog is None:
+            mod_config = moderation_cog.get_guild_config(ctx.guild.id)
+            exit_channel_id = mod_config.get("exit_channel_id")
+            exit_channel_mention = f"<#{exit_channel_id}>" if exit_channel_id else "Not configured"
+        else:
+            exit_channel_mention = "Moderation cog not loaded"
+
         embed = discord.Embed(
             title="Leveling Configuration",
             color=discord.Color.gold()
@@ -271,6 +279,9 @@ class Leveling(commands.Cog):
         channel_id = config.get("level_up_channel_id")
         channel_mention = f"<#{channel_id}>" if channel_id else "Not configured"
         embed.add_field(name="Level-up Channel", value=channel_mention, inline=True)
+        
+        #Exit Channel
+        embed.add_field(name="Member Leave Channel", value=exit_channel_mention, inline=True)
         
         #Level-roles
         role_info = []
@@ -346,6 +357,7 @@ class Leveling(commands.Cog):
         guild_id = str(ctx.guild.id)
         config = self.get_guild_config(guild_id)
         updated_settings = []
+        moderation_cog = self.bot.get_cog("Moderation")
         
         if not moderation_cog:
             await ctx.send("❌ Moderation cog is not loaded. Cannot set exit channel.", ephemeral=True)

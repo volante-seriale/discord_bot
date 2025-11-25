@@ -3,6 +3,9 @@ import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
+#   ---- Configure Intents ----
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix='/', intents=intents)
 
 #   ---- Load the token ----
 load_dotenv()
@@ -11,14 +14,14 @@ Token = os.getenv('BOT_TOKEN')
 if Token is None:
     print("Fatal Error: Token not found. Check '.env' file.")
     exit()
-    
-#   ---- Configure Intents ----
-intents = discord.Intents.all()
-bot = commands.Bot(command_prefix='/', intents=intents)
-
+     
 #   ---- Config bot.owner_id ----
 owner_id_int = int(os.getenv('BOT_OWNER_ID'))
 bot.owner_id = owner_id_int
+if bot.owner_id is None:
+    print("Fatal Error: BOT_OWNER_ID not found. Check '.env' file.")
+    exit()
+    
 
 #   ---- Definition of the time for the kick ----
 Kick_Timeout = timedelta(hours=48)
@@ -38,6 +41,10 @@ async def load_extensions():
         # Loads Cogs (cogs/tempvoice.py)
         await bot.load_extension("cogs.tempvoice")        
         print("COG: TempVoice loaded successfully.")
+        print("--------------")
+        
+        await bot.load_extension("cogs.moderation")     
+        print("COG: Moderation loaded successfully.")
         print("--------------")
 
     except Exception as e:
@@ -184,6 +191,6 @@ async def check_unassigned_roles():
                     print(f"Error: I can't kick {member.name} from the server '{guild.name}'")
                 except Exception as e:
                     print(f"Error while kicking {member.name}: {e}")
-        
+                    
 #   ---- Run ----
 bot.run(Token)

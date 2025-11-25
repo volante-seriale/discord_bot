@@ -56,13 +56,13 @@ class Leveling(commands.Cog):
         if guild_id in self.level_data:
             del self.level_data[guild_id]
             self._save_level_data()
-            print(f"Cleanup: level data remove for {guild.name} ({guild_id}).")
+            print(f"Mod: Removed config for guild {guild.name} ({guild.id}) on leave.")
 
         # Rimuove i dati di configurazione per quella gilda
         if guild_id in self.config_data:
             del self.config_data[guild_id]
             self._save_config_data()
-            print(f"Cleanup: data config removed for {guild.name} ({guild_id}).")
+            print(f"Mod: Removed config for guild {guild.name} ({guild.id}) on leave.")
     #Xp load
     def _load_level_data(self) -> Dict[str, Dict[str, Any]]:
         try:
@@ -71,7 +71,7 @@ class Leveling(commands.Cog):
         except FileNotFoundError:
             return{}
         except json.JSONDecodeError:
-            print("Error: levels.json corrupted, reload in void.")
+            print("Error: JSON decode error in levels.json. Using empty config.")
             return{}
         
     def _save_level_data(self):
@@ -86,7 +86,7 @@ class Leveling(commands.Cog):
         except FileNotFoundError:
             return{}
         except json.JSONDecodeError:
-            print("Error: config.json corrupted, reload in void.")
+            print("Error: JSON decode error in config.json. Using empty config.")
             return{}
         
     def _save_config_data(self):
@@ -209,7 +209,7 @@ class Leveling(commands.Cog):
         xp_prev_level = 0
         if current_level > 1 and (current_level-1) in LEVEL_THRESHOLDS:
             # Per evitare KeyError nel caso improbabile in cui level non sia ancora nella soglia
-            xp_prev_level = LEVEL_THRESHOLDS[current_level-1] # Usa livello precedente
+            xp_prev_level = LEVEL_THRESHOLDS[current_level-1] # Usa level precedente
             
         #Recalculates progression
         if current_level == MAX_LEVEL:
@@ -247,7 +247,7 @@ class Leveling(commands.Cog):
         await ctx.send(embed=embed)
         
 
-#   ---- New Slash Commands: /config ----
+#   ---- New Slash Commands: /config-show ----
     @commands.hybrid_command(name="config-show", description="Displays current configuration")
     @commands.has_permissions(administrator=True)
     async def show_config(self, ctx: commands.Context):
@@ -302,8 +302,8 @@ class Leveling(commands.Cog):
         
         level_key = str(level)
         
-        # Controlla se il ruolo è @everyone (che non dovrebbe essere assegnato/rimosso)
-        if role.id == ctx.guild.id: # L'ID della @everyone è uguale all'ID della Gilda
+        # Check if is @everyone role (cannot be assigned)
+        if role.id == ctx.guild.id:
             return await ctx.send("❌ Can't assign **@everyone**.", ephemeral=True)
         
         config["role_assignments"][level_key] = role.id
@@ -326,18 +326,19 @@ class Leveling(commands.Cog):
         
         await ctx.send(f"✅ Server invite link set to: ```\n{link}\n```", ephemeral=True)
         
-    @commands.hybrid_command(name="config-all", description="Configure all leveling settings (channel, invite, and level roles).")
+    @commands.hybrid_command(name="config", description="Configure all leveling settings (channel, invite, and level roles).")
     @commands.has_permissions(administrator=True)
     async def configure_all(
         self, 
         ctx: commands.Context, 
         level_up_channel: Optional[discord.TextChannel] = None, 
         invite_link: Optional[str] = None, 
-        role_level_1: Optional[discord.Role] = None,  # Ruolo per Livello 1
-        role_level_2: Optional[discord.Role] = None,  # Ruolo per Livello 2
-        role_level_3: Optional[discord.Role] = None,  # Ruolo per Livello 3
-        role_level_4: Optional[discord.Role] = None,  # Ruolo per Livello 4
-        role_level_5: Optional[discord.Role] = None   # Ruolo per Livello 5 (MAX)
+        role_level_1: Optional[discord.Role] = None,  # Role per level 1
+        role_level_2: Optional[discord.Role] = None,  # Role per level 2
+        role_level_3: Optional[discord.Role] = None,  # Role per level 3
+        role_level_4: Optional[discord.Role] = None,  # Role per level 4
+        role_level_5: Optional[discord.Role] = None,  # Role per level 5 (MAX)
+        exit_channel: Optional[discord.TextChannel] = None, #
     ):
         if ctx.guild is None:
             return await ctx.send("This command must be used in a server", ephemeral=True)
@@ -345,6 +346,9 @@ class Leveling(commands.Cog):
         guild_id = str(ctx.guild.id)
         config = self.get_guild_config(guild_id)
         updated_settings = []
+        
+        if not moderation_cog:
+            await ctx.send("❌ Moderation cog is not loaded. Cannot set exit channel.", ephemeral=True)
         
         # Map role value to levels
         role_params = {

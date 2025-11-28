@@ -160,9 +160,9 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError):
         
     # Every other error (es. CommandNotFound, BadArgument, ecc.)
     if hasattr(ctx.command, 'qualified_name'):
-        print(f"Errore non gestito nel comando '{ctx.command.qualified_name}': {error}")
+        print(f"Error not handle in the command '{ctx.command.qualified_name}': {error}")
     else:
-        print(f"Errore non gestito: {error}")
+        print(f"Error not handle: {error}")
 
 #   ---- Background task ----
 @tasks.loop(minutes=60)

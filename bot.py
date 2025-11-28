@@ -21,7 +21,6 @@ bot.owner_id = owner_id_int
 if bot.owner_id is None:
     print("Fatal Error: BOT_OWNER_ID not found. Check '.env' file.")
     exit()
-    
 
 #   ---- Definition of the time for the kick ----
 Kick_Timeout = timedelta(hours=48)
@@ -37,16 +36,17 @@ async def load_extensions():
         # Loads Cogs (cogs/leveling.py)
         await bot.load_extension("cogs.leveling")        
         print("COG: Leveling loaded successfully.")
-        print("--------------")
         # Loads Cogs (cogs/tempvoice.py)
         await bot.load_extension("cogs.tempvoice")        
         print("COG: TempVoice loaded successfully.")
-        print("--------------")
         
         await bot.load_extension("cogs.moderation")     
         print("COG: Moderation loaded successfully.")
-        print("--------------")
+        
+        await bot.load_extension("cogs.member_id")
+        print("COG: Member ID Lister loaded successfully.")
 
+        print("--------------")
     except Exception as e:
         print(f"Error while loading the cogs\n{e}")
 

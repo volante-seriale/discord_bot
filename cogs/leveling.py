@@ -97,7 +97,8 @@ class Leveling(commands.Cog):
         default_config = {
             "level_up_channel_id": None,
             "invite_link": None,
-            "role_assignments": {str(lvl): None for lvl in LEVEL_THRESHOLDS.keys()}
+            "role_assignments": {str(lvl): None for lvl in LEVEL_THRESHOLDS.keys()},
+            "is_active": True,
         }
         if guild_id not in self.config_data:
             self.config_data[guild_id] = default_config
@@ -115,6 +116,10 @@ class Leveling(commands.Cog):
         
         #Loads specifc guild config
         guild_config = self.get_guild_config(guild_id)
+        
+        if not guild_config.get("is_active", True):
+            return
+        
         role_assignments = {int(lvl): int(role_id) for lvl, role_id in guild_config["role_assignments"].items() if role_id is not None}
         level_up_channel_id = guild_config["level_up_channel_id"]
         
@@ -246,7 +251,6 @@ class Leveling(commands.Cog):
         embed.set_footer(text=f"User Id: {target.id}")
         await ctx.send(embed=embed)
         
-
 #   ---- Slash Commands: /config-show ----
     @commands.hybrid_command(name="config-show", description="Displays current configuration")
     @commands.has_permissions(administrator=True)
@@ -306,6 +310,7 @@ class Leveling(commands.Cog):
         #Send embed
         await ctx.send(embed=embed, ephemeral=False)
 
+#   ---- Slash Commands: /config ----
     @commands.hybrid_command(name="config", description="Configure every needed settings (channel, invite, level roles etc.).")
     @commands.has_permissions(administrator=True)
     async def configure_all(
@@ -397,7 +402,24 @@ class Leveling(commands.Cog):
             response_message = "⚠️ No value for the patch."
             
         await ctx.send(response_message, ephemeral=True)
-        
+
+#   ---- Slash Commands: /leveling-toggle ----
+    @commands.hybrid_command(name="leveling-toggle", description="Activate/Deactivate the leveling system for the server.")
+    @commands.has_permissions(administrator=True)
+    async def leveling_toggle(self, ctx: commands.Context, enabled: bool):
+            if ctx.guild is None:
+                return await ctx.send("This command must be used in a server.", ephemeral=True)
+
+            guild_id = str(ctx.guild.id)
+            config = self.get_guild_config(guild_id)
+
+            # Imposta il nuovo valore
+            config["is_active"] = enabled
+            self._save_config_data()
+
+            status = "activated" if enabled else "deactivated"
+            await ctx.send(f"✅ Leveling system **{status}** for **{ctx.guild.name}**.", ephemeral=False)
+       
 #   ---- Setup to load Cog ----
 async def setup(bot: commands.Bot):
     await bot.add_cog(Leveling(bot))

@@ -38,12 +38,12 @@ class Moderation(commands.Cog):
         return self.config_data[guild_id_str]
     
     @commands.Cog.listener()
-    async def on_guild_join(self, guild: discord.Guild):
+    async def on_guild_remove(self, guild: discord.Guild):
         guild_id_str = str(guild.id)
         if guild_id_str in self.config_data:
             del self.config_data[guild_id_str]
             self._save_config_data()
-            print(f"Mod: Removed config for guild {guild.name} ({guild.id}) on leave.")
+            print(f"Mod: Removed config for guild {guild.name} ({guild.id}) on bot removal.")
             
     #   ---- Event listener: Member Leave ----
     @commands.Cog.listener()
@@ -66,33 +66,6 @@ class Moderation(commands.Cog):
                     print(f"Mod: Error sending leave message in guild {member.guild.name} ({guild_id}): {e}")
             else:
                 print(f"Mod: Exit channel ID {exit_channel_id} is not a text channel in guild {member.guild.name} ({guild_id}).")
-
-    #   ---- Slash Commad: /config-exit-channel ----
-    @commands.hybrid_command(name="config-exit-channel", description="Sets the channel for member leave messages.")
-    @commands.has_permissions(administrator=True)
-    async def config_exit_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
-        if ctx.guild is None:
-            return await ctx.send("This command must be used in a server.", ephemeral=True)
-        
-        guild_id = ctx.guild.id
-        config = self.get_guild_config(guild_id)
-        
-        if channel is None:
-            current_id = config.get("exit_channel_id")
-            channel_mention = f"<#{current_id}>" if current_id else "**not set**"
-            
-            embed = discord.Embed(
-                title="Exit Message Configuration",
-                description="Channel where the bot announces when a member leaves the server.",
-                color=discord.Color.dark_red()
-            )
-            embed.add_field(name="Current Exit Channel", value=channel_mention, inline=False)
-            return await ctx.send(embed=embed, ephemeral=True)
-        
-        else:
-            config["exit_channel_id"] = channel.id
-            self._save_config_data()
-            await ctx.send(f"✅ Exit message channel set to **{channel.mention}**.", ephemeral=True)
 
 #   ---- Setup function ----
 async def setup(bot: commands.Bot):

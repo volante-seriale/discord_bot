@@ -112,36 +112,7 @@ class TempVoice(commands.Cog):
             except Exception as e:
                 print(f"TempVoice Error: {e} while deleting channel {channel.id}.")
             
-    #   ---- Command to set the creator channel ----
-    @commands.hybrid_command(name="config-tempvoice", description="Sets the voice channel used to create temporary voice channels.")
-    @commands.has_permissions(administrator=True)
-    async def config_tempvoice(self, ctx: commands.Context, channel: Optional[discord.VoiceChannel] = None):
-        if ctx.guild is None:
-            return await ctx.send("This command must be used in a server.", ephemeral=True)
-        
-        guild_id_str = str(ctx.guild.id)
-        config = self.get_guild_config(guild_id_str)
-        
-        if channel is None:
-            current_id = config.get("creator_channel_id")
-            channel_mention = f"<#{current_id}>" if current_id else "**Not set**"
             
-            embed = discord.Embed(
-                title="TempVoice Configuration",
-                description=f"Creator channel",
-                color=discord.Color.blue()
-            )
-            embed.add_field(name="Current Channel Creator", value=channel_mention, inline=False)
-
-            return await ctx.send(embed=embed, ephemeral=True)
-        else:
-            if channel.type != discord.ChannelType.voice:
-                return await ctx.send("❌ The channel must be a **voice channel**.", ephemeral=True)
-            
-            config["creator_channel_id"] = channel.id
-            self._save_config_data()
-            
-            await ctx.send(f"✅ Creator channel set to **{channel.mention}**.", ephemeral=True)
 #   ---- Setup function ----
 async def setup(bot: commands.Bot):
     await bot.add_cog(TempVoice(bot))

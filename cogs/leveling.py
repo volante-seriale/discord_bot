@@ -208,8 +208,8 @@ class Leveling(commands.Cog):
         #Calculates xp in actual_level
         xp_prev_level = 0
         if current_level > 1 and (current_level-1) in LEVEL_THRESHOLDS:
-            # Per evitare KeyError nel caso improbabile in cui level non sia ancora nella soglia
-            xp_prev_level = LEVEL_THRESHOLDS[current_level-1] # Usa level precedente
+            # To avoid KeyError 
+            xp_prev_level = LEVEL_THRESHOLDS[current_level-1] # Use previous level 
             
         #Recalculates progression
         if current_level == MAX_LEVEL:
@@ -238,16 +238,16 @@ class Leveling(commands.Cog):
         
         if level < MAX_LEVEL:
             embed.add_field(name="Xp to next level", value=f"**{xp_to_next_level}**", inline=True)
-            embed.add_field(name="Progression", value=f"`[{progress_bar}]` ({progress:.2f}%)", inline=False)
+            embed.add_field(name="Progression", value=f"[{progress_bar}] ({progress:.2f}%)", inline=False)
         else:
             embed.add_field(name="State", value=f"🎉 **Max level reached**", inline=True)
-            embed.add_field(name="Progress", value="`[██████████]` (100.00%)", inline=False) 
+            embed.add_field(name="Progress", value="`[🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦]` (100.00%)", inline=False) 
         
         embed.set_footer(text=f"User Id: {target.id}")
         await ctx.send(embed=embed)
         
 
-#   ---- New Slash Commands: /config-show ----
+#   ---- Slash Commands: /config-show ----
     @commands.hybrid_command(name="config-show", description="Displays current configuration")
     @commands.has_permissions(administrator=True)
     async def show_config(self, ctx: commands.Context):
@@ -259,12 +259,22 @@ class Leveling(commands.Cog):
         config = self.get_guild_config(guild_id)
 
         moderation_cog = self.bot.get_cog("Moderation")
-        if moderation_cog is None:
+        
+        TempVoice_cog = self.bot.get_cog("TempVoice")
+        
+        if moderation_cog:
             mod_config = moderation_cog.get_guild_config(ctx.guild.id)
             exit_channel_id = mod_config.get("exit_channel_id")
             exit_channel_mention = f"<#{exit_channel_id}>" if exit_channel_id else "Not configured"
         else:
             exit_channel_mention = "Moderation cog not loaded"
+            
+        if TempVoice_cog:
+            voice_config = TempVoice_cog.get_guild_config(ctx.guild.id)
+            creator_channel_id = voice_config.get("creator_channel_id")
+            creator_channel_mention = f"<#{creator_channel_id}>" if creator_channel_id else "Not configured"
+        else:
+            creator_channel_mention = "❌ TempVoice cog not loaded"
 
         embed = discord.Embed(
             title="Leveling Configuration",
@@ -280,64 +290,23 @@ class Leveling(commands.Cog):
         channel_mention = f"<#{channel_id}>" if channel_id else "Not configured"
         embed.add_field(name="Level-up Channel", value=channel_mention, inline=True)
         
-        #Exit Channel
-        embed.add_field(name="Member Leave Channel", value=exit_channel_mention, inline=True)
-        
         #Level-roles
         role_info = []
         for level, role_id in config["role_assignments"].items():
-            role_mention = f"<@{role_id}>" if channel_id else "Not configured"
+            role_mention = f"<@&{role_id}>" if role_id else "Not configured"
             role_info.append(f"Level **{level}**: {role_mention}")
         embed.add_field(name="Level Roles", value="\n".join(role_info), inline=False)
+        
+        #Voice Creator Channel
+        embed.add_field(name="Voice Creator Channel", value=creator_channel_mention, inline=True)
+        
+        #Exit Channel
+        embed.add_field(name="Member Leave Channel", value=exit_channel_mention, inline=True)
+        
+        #Send embed
         await ctx.send(embed=embed, ephemeral=False)
-        
-    @commands.hybrid_command(name="config-channel", description="Sets the channel for level-up notifications.")
-    @commands.has_permissions(administrator=True)
-    async def configure_channel(self, ctx: commands.Context, channel: discord.TextChannel):
-        guild_id = str(ctx.guild.id)
-        config = self.get_guild_config(guild_id)
-        
-        config["level_up_channel_id"] = channel.id
-        self._save_config_data()
-        
-        await ctx.send(f"✅ Level-up notifications channel set to **{channel.mention}**.", ephemeral=True)
 
-    @commands.hybrid_command(name="config-role", description="Assigns a role to a level.")
-    @commands.has_permissions(administrator=True)
-    async def configure_role(self, ctx: commands.Context, level: int, role: discord.Role):
-        guild_id = str(ctx.guild.id)
-        config = self.get_guild_config(guild_id)
-        
-        if level < 1 or level > MAX_LEVEL:
-            return await ctx.send(f"❌ Level not valid. Must be betwen **1** e **{MAX_LEVEL}**.", ephemeral=True)
-        
-        level_key = str(level)
-        
-        # Check if is @everyone role (cannot be assigned)
-        if role.id == ctx.guild.id:
-            return await ctx.send("❌ Can't assign **@everyone**.", ephemeral=True)
-        
-        config["role_assignments"][level_key] = role.id
-        self._save_config_data()
-        
-        await ctx.send(f"✅ Role for the **Level {level}** set to **{role.mention}**.", ephemeral=True)
-        
-    @commands.hybrid_command(name="config-invite", description="Sets the server's permanent invite link for /serverinfo.")
-    @commands.has_permissions(administrator=True)
-    async def configure_invite(self, ctx: commands.Context, link: str):
-        guild_id = str(ctx.guild.id)
-        config = self.get_guild_config(guild_id)
-        
-        # Semplice validazione del link (potrebbe essere più robusta, ma è un buon inizio)
-        if not link.startswith("http") and not link.startswith("discord.gg/"):
-            return await ctx.send("❌ Invalid link. Make sure is a link (es. `https://discord.gg/abc`)", ephemeral=True)
-        
-        config["invite_link"] = link
-        self._save_config_data()
-        
-        await ctx.send(f"✅ Server invite link set to: ```\n{link}\n```", ephemeral=True)
-        
-    @commands.hybrid_command(name="config", description="Configure all leveling settings (channel, invite, and level roles).")
+    @commands.hybrid_command(name="config", description="Configure every needed settings (channel, invite, level roles etc.).")
     @commands.has_permissions(administrator=True)
     async def configure_all(
         self, 
@@ -349,7 +318,8 @@ class Leveling(commands.Cog):
         role_level_3: Optional[discord.Role] = None,  # Role per level 3
         role_level_4: Optional[discord.Role] = None,  # Role per level 4
         role_level_5: Optional[discord.Role] = None,  # Role per level 5 (MAX)
-        exit_channel: Optional[discord.TextChannel] = None, #
+        exit_channel: Optional[discord.TextChannel] = None, # Exit channel
+        voice_creator_channel: Optional[discord.VoiceChannel] = None # Voice creator channel  
     ):
         if ctx.guild is None:
             return await ctx.send("This command must be used in a server", ephemeral=True)
@@ -357,10 +327,10 @@ class Leveling(commands.Cog):
         guild_id = str(ctx.guild.id)
         config = self.get_guild_config(guild_id)
         updated_settings = []
+        
         moderation_cog = self.bot.get_cog("Moderation")
         
-        if not moderation_cog:
-            await ctx.send("❌ Moderation cog is not loaded. Cannot set exit channel.", ephemeral=True)
+        voice_temp_cog = self.bot.get_cog("TempVoice")
         
         # Map role value to levels
         role_params = {
@@ -395,7 +365,27 @@ class Leveling(commands.Cog):
                 config["role_assignments"][level_key] = role.id
                 updated_settings.append(f"Role for the **{level}** set: **{role.mention}**")
             
-        # 4. Save patched config
+        # 4. Config exit channel
+        if exit_channel is not None:
+            if moderation_cog is None:
+                updated_settings.append("❌ Moderation cog is not loaded. Cannot set exit channel.")
+            else:
+                mod_config = moderation_cog.get_guild_config(ctx.guild.id)
+                mod_config["exit_channel_id"] = exit_channel.id
+                moderation_cog._save_config_data()
+                updated_settings.append(f"Exit channel set to: **{exit_channel.mention}**")
+        
+        # 5. Config voice creator channel
+        if voice_creator_channel is not None:
+            if voice_temp_cog is None:
+                updated_settings.append("❌ VoiceTemp cog is not loaded. Cannot set voice creator channel.")
+            else:
+                voice_config = voice_temp_cog.get_guild_config(guild_id)
+                voice_config["creator_channel_id"] = voice_creator_channel.id
+                voice_temp_cog._save_config_data()
+                updated_settings.append(f"Voice creator channel set to: **{voice_creator_channel.mention}**")
+                
+        # END. Save patched config
         if updated_settings:
             self._save_config_data()
             response_message = (

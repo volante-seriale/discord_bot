@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import io
 
 class RoleIDListerHybrid(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -17,23 +18,34 @@ class RoleIDListerHybrid(commands.Cog):
             return
         
         # 2. Member ID extraction
-        member_ids = []
+        member_info = []
         for member in target_role.members:
-            member_ids.append(str(member.id))
+            # Formatta la riga come "Nome (ID: XXXXXXXXXXXXXXX)" o simile
+            member_info.append(f"ID: {member.id} | Name: {member.display_name} ")
         
-        # 3. Response message
-        if member_ids:
-            id_list_text = "\n".join(member_ids)
-            response_message = (
-                f"✅ Found **{len(member_ids)}** members with the role: **{target_role.name}**:\n"
-                f"```\n{id_list_text}\n```"
+        member_count = len(member_info)
+
+        # 3. File Creation and Sending
+        if member_info:
+            
+            file_content = "\n".join(member_info)
+            buffer = io.StringIO(file_content)
+            
+            filename = f"members_{target_role.name.replace(' ', '_')}_ids.txt"
+            discord_file = discord.File(buffer, filename=filename)
+
+            embed = discord.Embed(
+                title=f"✅ Member List for Role: {target_role.name}",
+                description=f"Found **{member_count}** members. The list of names and IDs is attached below.",
+                color=discord.Color.green()
             )
+            
+            await ctx.send(embed=embed, file=discord_file)
+            
         else:
             response_message = f"🤔 No members found with the role: **{target_role.name}**."
+            await ctx.send(response_message)
 
-        # Sends the response
-        await ctx.send(response_message)
-
-#   ---- Cog setup ----
+#   ---- Cog setup ----
 async def setup(bot: commands.Bot):
     await bot.add_cog(RoleIDListerHybrid(bot))

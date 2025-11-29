@@ -1,6 +1,7 @@
 # Discord Leveling & Utility Bot
 
 A multi-purpose Discord bot featuring an **XP leveling system**, **temporary voice channels**, **basic moderation**, **auto-kick for users without roles**, and useful admin commands.
+For now configurable only through in-app commands.
 
 ## Main Features
 

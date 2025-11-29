@@ -1,83 +1,100 @@
 # Discord Leveling & Utility Bot
 
-Un bot Discord multifunzione con sistema di **livellamento XP**, **canali vocali temporanei**, **moderazione base**, **kick automatico per utenti senza ruolo** e comandi utili per gli amministratori.
+A multi-purpose Discord bot featuring an **XP leveling system**, **temporary voice channels**, **basic moderation**, **auto-kick for users without roles**, and useful admin commands.
 
-## Funzionalità principali
+## Main Features
 
-### Sistema di Livellamento (Leveling)
-- Guadagno di 1 XP per ogni messaggio inviato (non comandi)
-- 5 livelli configurabili con soglia XP crescente
-- Assegnazione automatica di ruoli al raggiungimento di un livello
-- Rimozione del ruolo precedente al level-up
-- Messaggio di congratulazioni nel canale configurato
-- Comando `/level` per vedere il proprio livello e progresso (con barra progresso)
-- Comando `/config` per impostare ruoli, canale level-up e link invito
-- Possibilità di disattivare il sistema per server (`/leveling-toggle`)
+### Leveling System
+- Earn 1 XP per message sent (commands excluded)
+- 5 configurable levels with increasing XP thresholds
+- Automatic role assignment upon reaching a new level
+- Previous level role is automatically removed
+- Congratulations message sent in the configured channel
+- `/level` command to view your current level and progress (with progress bar)
+- Ability to enable/disable leveling per server (`/leveling-toggle`)
 
-### Canali Vocali Temporanei (TempVoice)
-- Un canale "creatore" configurabile
-- Quando un utente entra nel canale creatore → viene creato un canale vocale personale con il suo nome
-- L'utente diventa automaticamente gestore del canale
-- Il canale viene eliminato automaticamente quando resta vuoto
+### Temporary Voice Channels (TempVoice)
+- Configurable "creator" voice channel
+- When a user joins the creator channel → a personal voice channel is created with their name
+- The user automatically becomes manager of their channel
+- Channel is automatically deleted when empty
 
-### Moderazione & Utility
-- Messaggio di addio configurabile quando un membro lascia il server
-- Kick automatico dopo 48 ore per chi non ha nessun ruolo (escluso @everyone)
-  - Task in background ogni 60 minuti
-  - Disattivabile per server con `/bg-task-toggle`
-- `/list-id @ruolo` → scarica un file .txt con ID e nome di tutti i membri con quel ruolo
-- `/serverinfo` → informazioni base del server + link invito (se configurato)
-- `/ping` → latency del bot
-- `/sync` → sincronizzazione globale dei comandi slash (solo owner)
+### Moderation & Utilities
+- Configurable goodbye message when a member leaves the server
+- Auto-kick after 48 hours for users with no roles (except @everyone)
+  - Background task runs every 60 minutes
+  - Can be disabled per server with `/bg-task-toggle`
+- `/list-id @role` → downloads a .txt file containing IDs and names of all members with that role
+- `/serverinfo` → displays server info + invite link (if configured)
+- `/ping` → shows bot latency
+- `/sync` → force global slash command sync (owner only)
 
-## Comandi Principali
+## Command List
 
-| Comando               | Descrizione                                           | Permessi richiesti         |
-|-----------------------|-------------------------------------------------------|----------------------------|
-| `/ping`               | Mostra la latenza del bot                             | Tutti                      |
-| `/serverinfo`         | Info del server + link invito                         | Tutti                      |
-| `/level` [membro]     | Mostra livello e XP (proprio o di un altro utente)    | Tutti                      |
-| `/list-id @ruolo`     | Scarica lista ID + nome dei membri con quel ruolo     | Amministratore             |
-| `/config`             | Configura tutto (canali, ruoli, link, ecc.)           | Amministratore             |
-| `/config-show`        | Visualizza la configurazione attuale                  | Amministratore             |
-| `/leveling-toggle`    | Attiva/disattiva il sistema di livellamento           | Amministratore             |
-| `/bg-task-toggle`     | Attiva/disattiva il kick automatico dopo 48h          | Amministratore             |
-| `/sync`               | Sincronizza i comandi slash (globale)                 | Solo Owner del bot         |
+| Command               | Description                                                  | Required Permissions       |
+|-----------------------|--------------------------------------------------------------|----------------------------|
+| `/ping`               | Shows bot latency                                            | Everyone                   |
+| `/serverinfo`         | Server info + invite link (if set)                           | Everyone                   |
+| `/level` [member]     | Shows your or another user's level and XP                    | Everyone                   |
+| `/list-id @role`      | Downloads a .txt with IDs and names of members with the role | Administrator              |
+| `/config`             | Configure everything (channels, roles, links, etc.)          | Administrator              |
+| `/config-show`        | Displays current server configuration                        | Administrator              |
+| `/leveling-toggle`    | Enable/disable the leveling system                           | Administrator              |
+| `/bg-task-toggle`     | Enable/disable the 48-hour auto-kick task                    | Administrator              |
+| `/sync`               | Force sync of global slash commands                          | Bot Owner only             |
 
-## Requisiti
+## Requirements
 
 - Python 3.11+
 - `discord.py>=2.3.0`
 - `python-dotenv`
 
-## Installazione
+## Installation
 
-1. Clona la repository
+1. Install the required Python packages
 ```bash
-git clone https://github.com/tuo-username/nome-bot.git
-cd nome-bot
+pip install discord.py python-dotenv
 ```
-2. Crea il file `.env` nella root del progetto
-```env
-BOT_TOKEN=il_tuo_token_del_bot
-BOT_OWNER_ID=il_tuo_user_id
-```
-3. Avvia il bot
+2. Clone the repository
 ```bash
+git clone https://github.com/your-username/your-bot-name.git
+```
+3. Create an `.env` file inside the root
+```
+BOT_TOKEN = your_bot_token_here
+BOT_OWNER_ID = your_user_id_here
+```
+4. Save and start the bot
+```
 python bot.py
 ```
-## Struttura dei file
-.
-├── bot.py                    → File principale del bot
+## File Structure
+```
+Root
+├── bot.py                     → Main bot file
 ├── cogs/
-│   ├── leveling.py           → Sistema XP, comandi config e level-up
-│   ├── tempvoice.py          → Canali vocali temporanei
-│   ├── moderation.py         → Messaggi di uscita
-│   └── member_id.py          → Comando /list-id
-├── data/                     → (creata automaticamente)
-│   ├── levels.json           → Dati XP e livelli per server/utente
-│   ├── config.json           → Configurazione leveling per server
-│   ├── moderation_config.json → Canale di uscita membri
-│   └── tempvoice_config.json → Canale creatore voce temporanea
-├── .env                      → Token e Owner ID (non commitare!)
+│   ├── leveling.py            → XP system, config & level-up commands
+│   ├── tempvoice.py           → Temporary voice channels
+│   ├── moderation.py          → Goodbye messages
+│   └── member_id.py           → /list-id command
+├── data/                      → (auto-created on first launch)
+│   ├── levels.json            → XP and level data per user/server
+│   ├── config.json            → Leveling configuration per server
+│   ├── moderation_config.json → Goodbye message channel
+│   └── tempvoice_config.json  → Voice creator channel config
+├── .env                       → Bot token & owner ID (never commit!)
 └── README.md
+```
+## Required Bot Permissions
+**Reccomended**: Invite the bot with Administrator privileges or grant the following permissions.
+- Manage Channels (for TempVoice)
+- Kick Members (for auto-kick background task)
+- Manage Roles (for level role assignment)
+- Send Messages / Embed
+- Read Message History
+- Move Members (voice channels)
+
+## Notes
+- The `data/` folder and JSON files are automatically created on first launch
+- All the data is stored in easy-to-edit JSON files
+- The 48-hour auto-kick ignores bots, server owners, and anyone with at least one role

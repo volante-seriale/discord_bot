@@ -7,3 +7,6 @@
 __pycache__/
 venv/
 *.pyc
+
+# File json
+data/*.json

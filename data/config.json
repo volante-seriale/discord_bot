@@ -9,7 +9,8 @@
             "4": 1439044973642256384,
             "5": 1439045087848829080
         },
-        "is_active": true
+        "is_active": true,
+        "backgroundT_status": true
     },
     "1326534315357769748": {
         "level_up_channel_id": null,
@@ -21,6 +22,7 @@
             "4": null,
             "5": null
         },
-        "is_active": false
+        "is_active": false,
+        "backgroundT_status": false
     }
 }

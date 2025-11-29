@@ -99,6 +99,7 @@ class Leveling(commands.Cog):
             "invite_link": None,
             "role_assignments": {str(lvl): None for lvl in LEVEL_THRESHOLDS.keys()},
             "is_active": True,
+            "backgroundT_status": True,
         }
         if guild_id not in self.config_data:
             self.config_data[guild_id] = default_config
@@ -324,7 +325,7 @@ class Leveling(commands.Cog):
         role_level_4: Optional[discord.Role] = None,  # Role per level 4
         role_level_5: Optional[discord.Role] = None,  # Role per level 5 (MAX)
         exit_channel: Optional[discord.TextChannel] = None, # Exit channel
-        voice_creator_channel: Optional[discord.VoiceChannel] = None # Voice creator channel  
+        voice_creator_channel: Optional[discord.VoiceChannel] = None # Voice creator channel
     ):
         if ctx.guild is None:
             return await ctx.send("This command must be used in a server", ephemeral=True)
@@ -419,7 +420,35 @@ class Leveling(commands.Cog):
 
             status = "activated" if enabled else "deactivated"
             await ctx.send(f"✅ Leveling system **{status}** for **{ctx.guild.name}**.", ephemeral=False)
-       
+
+#   ---- Slash Commands: /backgroundT-toggle ----
+    @commands.hybrid_command(name="bg-task-toggle", description="Activate/Deactivate the background role-check task for the server.")
+    @commands.has_permissions(administrator=True)
+    async def backgroundT_toggle(self, ctx: commands.Context, enabled: bool):
+                
+        # 1. Check guild context
+        if ctx.guild is None:
+            return await ctx.send("This command must be used in a server", ephemeral=True)
+
+        # 2. Load guild config
+        guild_id = str(ctx.guild.id)
+        config: Dict[str, Any] = self.get_guild_config(guild_id)
+
+        # 3. Set new value and save
+        config["backgroundT_status"] = enabled
+        self._save_config_data()
+
+        # 4. Feedback to utente
+        status = "activated" if enabled else "deactivated"
+        
+        embed = discord.Embed(
+            title="⚙️ Background Task",
+            description=f"The background task was **{status}** for **{ctx.guild.name}**.",
+            color=discord.Color.green() if enabled else discord.Color.red()
+        )
+        embed.set_footer(text="Status will update at the next cicle (every 60 minuts).")
+        await ctx.send(embed=embed, ephemeral=False)
+
 #   ---- Setup to load Cog ----
 async def setup(bot: commands.Bot):
     await bot.add_cog(Leveling(bot))

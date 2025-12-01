@@ -47,7 +47,7 @@ For now configurable only through in-app commands.
 ## Requirements
 
 - Python 3.11+
-- `discord.py>=2.3.0`
+- `discord.py >= v2.3.0`
 - `python-dotenv`
 
 ## Installation

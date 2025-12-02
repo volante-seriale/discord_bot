@@ -3,6 +3,11 @@ import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
+
+#   ---- Global log list ----
+WEB_LOGS = []
+MAX_LOGS = 200
+
 #   ---- Configure Intents ----
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/', intents=intents)

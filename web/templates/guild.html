@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ guild.name }} - Configurazione</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ guild.name }}</h1>
+        <a href="/dashboard">← Torna ai server</a>
+
+        <h2>Top 10 Livelli</h2>
+        <div class="top-list">
+            {% for user in top_users %}
+            <div class="top-user">
+                <img src="{{ user.avatar }}" width="40" height="40">
+                <span><strong>{{ user.name }}</strong> - Livello {{ user.level }} ({{ user.xp }} XP)</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <h2>Configurazione</h2>
+        <div class="config-grid">
+            <div class="card">
+                <h3>Leveling</h3>
+                <p>Level Up Channel: {{ '<#' ~ config.level_up_channel_id ~ '>' if config.level_up_channel_id else 'Non impostato' }}</p>
+                <p>Background Task: {{ 'Attivo' if config.backgroundT_status else 'Disattivato' }}</p>
+            </div>
+            <div class="card">
+                <h3>TempVoice</h3>
+                <p>Canale Creatore: {{ '<#' ~ config.creator_channel_id ~ '>' if config.creator_channel_id else 'Non impostato' }}</p>
+            </div>
+            <div class="card">
+                <h3>Moderation</h3>
+                <p>Canale Uscite: {{ '<#' ~ config.exit_channel_id ~ '>' if config.exit_channel_id else 'Non impostato' }}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Ciao, {{ user.username }}!</h1>
+            <a href="/logout" class="btn small">Logout</a>
+        </div>
+
+        <h2>I tuoi server</h2>
+        <div class="guilds">
+            {% for guild in guilds %}
+            <a href="/guild/{{ guild.id }}" class="guild-card">
+                <img src="{{ guild.icon.url if guild.icon else 'https://via.placeholder.com/64' }}" alt="">
+                <div>
+                    <strong>{{ guild.name }}</strong>
+                    <small>{{ guild.member_count }} membri</small>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -38,10 +38,10 @@ async def load_extensions():
         os.makedirs('data')
         
     try:
-        # Loads Cogs (cogs/leveling.py)
+
         await bot.load_extension("cogs.leveling")        
         print("COG: Leveling loaded successfully.")
-        # Loads Cogs (cogs/tempvoice.py)
+
         await bot.load_extension("cogs.tempvoice")        
         print("COG: TempVoice loaded successfully.")
         
@@ -61,6 +61,7 @@ async def on_ready():
     await load_extensions()
     print(f'Bot is logged in as {bot.user.name}')
     print("--------------")
+    
     print("Extensions loaded")
     print("--------------")
     
@@ -70,7 +71,6 @@ async def on_ready():
     print("Background task started.")
     print("--------------")
 
-    #bot log-in
     await bot.tree.sync()
     print("slash command synced globally")
     print("--------------")
@@ -94,7 +94,6 @@ async def server_info_command(interaction: discord.Interaction):
     invite_link = None
     if leveling_cog:
         guild_id = str(guild.id)
-        # Accedi alla funzione di configurazione per recuperare i dati
         guild_config = leveling_cog.get_guild_config(guild_id) 
         invite_link = guild_config.get("invite_link")
         
@@ -123,9 +122,9 @@ async def server_info_command(interaction: discord.Interaction):
 async def sync_commands(ctx: commands.Context):
     """Syncs slash commands globaly."""
     
-    # Check di Ownership
+    # Check Ownership
     if ctx.author.id != ctx.bot.owner_id:
-        return await ctx.send("You're not the bot owner", ephemeral=True) 
+        return await ctx.send("ℹ️ You're not the bot owner", ephemeral=True) 
 
     try:
         initial_message = await ctx.send("⏳ Trying to globaly sync slash commands...", ephemeral=True) 
@@ -139,7 +138,7 @@ async def sync_commands(ctx: commands.Context):
         
     except Exception as e:
         await initial_message.edit(content=f"❌ Error during sync: {e}")
-        print(f"Errore di sincronizzazione: {e}")
+        print(f"❌ Errore di sincronizzazione: {e}")
 
 #   ---- Event listener for commands errors ----
 @bot.event
@@ -165,9 +164,9 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError):
         
     # Every other error (es. CommandNotFound, BadArgument, ecc.)
     if hasattr(ctx.command, 'qualified_name'):
-        print(f"Error not handle in the command '{ctx.command.qualified_name}': {error}")
+        print(f"❌ Error not handle in the command '{ctx.command.qualified_name}': {error}")
     else:
-        print(f"Error not handle: {error}")
+        print(f"❌ Error not handle: {error}")
 
 #   ---- Background task ----
 @tasks.loop(minutes=60)
@@ -177,7 +176,7 @@ async def check_unassigned_roles():
     # 1. Recupera il Cog Leveling (necessario per accedere alla configurazione)
     leveling_cog = bot.get_cog("Leveling")
     if not leveling_cog:
-        print("ATTENZIONE: COG 'Leveling' non trovato. Impossibile leggere lo stato di backgroundT.")
+        print("Warnign: COG 'leveling' not found. Unable to read backgroundT_status.")
         return
 
     for guild in bot.guilds:
@@ -189,7 +188,7 @@ async def check_unassigned_roles():
         # 3. Check if backgroundT_status is enabled
         if not guild_config.get("backgroundT_status", True): 
             print(f"Background task (kick) for the guild **{guild.name}** is unactive from server config.")
-            continue # Skips to the next guild
+            continue
                     
         bot_member = guild.get_member(bot.user.id)
         
@@ -198,7 +197,6 @@ async def check_unassigned_roles():
             continue
         
         async for member in guild.fetch_members(limit=None):
-            # Ignores bot and owner in the server
             if member.bot or member == guild.owner or member == bot_member:
                 continue
             

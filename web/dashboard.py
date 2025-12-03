@@ -41,7 +41,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback-secret-change-me")
 # ───── OAuth2 Discord ─────
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-REDIRECT_URI = "http://localhost:5000/callback"
+REDIRECT_URI = "https://oviparous-dan-overnarrow.ngrok-free.dev/callback"
 AUTH_URL = f"https://discord.com/oauth2/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code&scope=identify%20guilds"
 TOKEN_URL = "https://discord.com/api/oauth2/token"
 
@@ -174,6 +174,9 @@ def run_bot():
             print("Moderation caricato")
             await bot.load_extension("cogs.member_id")
             print("Member ID caricato")
+            await bot.load_extension("cogs.utility")
+            print("Utility caricato")
+
             await bot.tree.sync()
             print("Comandi slash sincronizzati")
         except Exception as e:

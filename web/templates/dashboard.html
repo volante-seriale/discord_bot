@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <title>VolanBOTte - Home</title>
+    <link rel="stylesheet" href="./static/style.css" />
+    <link rel="icon" type="image/png" href="./static/favicon.png" />
+    <!-- Bootstrap CSS and JS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body class="light-bg">
+<header>
+    <nav class="navbar navbar-dark navbar-expand-lg navbar-stile p-3">
+      <div class="container-fluid darker-bg p-2">
+        <a class="navbar-brand" href="/home">
+          <img
+            src="../static/logo.png"
+            alt="VolanBOTte logo"
+            width="40px"
+            class="round" />
+          VolanBOTte
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a href="/dashboard" class="nav-link active p-3">Dashboard</a>
+            </li>
+          </ul>
+          <a href="/logout" class="btn btn-outline-danger">Logout</a>
+        </div>
+      </div>
+    </nav>
+</header>
+<main>
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col text-center">
+                <h1 class="text-light">Dashboard di Volanbotte</h1>
+                <p class="text-light">
+                    Ciao<strong>{{ user.username }}</strong>
+                    <img src="{{ user.avatar_url if user.avatar else 'https://cdn.discordapp.com/assets/322c936a8c8be1b803cd94861b0fc149.svg' }}"  width="40"  class="rounded-circle ms-2">
+                </p>
+            </div>
+        </div>
+        {% if guilds %}
+        <h3 class="text-light mb-4">Server dove hai permessi di<span class="text-warning"> Amministratore </span>o sei<span class="text-info"> Owner</span></h3>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for guild in guilds %}
+            <div class="col">
+                <div class="h-100 text-center shadow card-discord">
+                    {% if guild.icon_url %}
+                    <img src="{{ guild.icon_url }}" class="rounded-circle mx-auto mt-4" width="100" height="100" alt="{{ guild.name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    {% endif %}
+                    <div class="bg-blurple rounded-circle mx-auto mt-4 d-flex align-items-center justify-content-center text-white fw-bold" style="width:100px; height:100px; font-size:40px; {% if guild.icon_url %}display:none;{% endif %}"> {{ guild.name[:2]|upper }}
+                    </div>
+                    <div class="card-body card-body-discord">
+                        <h5 class="card-title mt-3">{{ guild.name }}</h5>
+                        <p class="text-muted small">ID: {{ guild.id }}</p>
+                        <a href="/guild/{{ guild.id }}" class="btn btn-primary btn-sm my-2"> <i class="fas fa-cog"></i> Gestisci </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-server fa-5x text-muted mb-4"></i>
+                <h3>Nessun server trovato</h3>
+                <p>Non sei amministratore o owner in nessun server dove è presente ilbot.<br/>Aggiungilo con i permessi corretti!</p>
+                <a href="/login" class="btn btn-discord mt-3">Riprova login</a>
+            </div>
+        {% endif %}
+    </div>
+</main>
+
+<footer class="dark-bg p-3 darker-bg">
+    <div class="container text-secondary">
+        <div class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+            <p class="col-md-4 mb-0 text-light">2025 VolanBOTte. All rights reserved.</p>
+            <ul class="nav col-md-4 justify-content-end">
+                <li class="nav-item"><a href="https://www.instagram.com/vola._.nte/"class="nav-link px-2"><i class="fa-brands fa-instagram"></i> Instagram</a></li>
+                <li class="nav-item"><a href="https://github.com/volante-seriale"class="nav-link px-2"><i class="fa-brands fa-github"></i> GitHub</a></li>
+                <li class="nav-item"><a href="https://discord.gg/J3hEjb24VG" class="nav-link px-2"><i class="fa-brands fa-discord"></i> Discord</a></li>
+            </ul>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

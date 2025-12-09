@@ -1,12 +1,51 @@
-body { font-family: 'Segoe UI', sans-serif; background: #2f3136; color: #dcddde; margin: 0; padding: 20px; }
-.container { max-width: 1000px; margin: 0 auto; }
-.header { display: flex; justify-content: space-between; align-items: center; }
-.btn { background: #5865F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
-.btn.small { padding: 5px 10px; font-size: 0.9em; }
-.guilds { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 20px; }
-.guild-card { background: #36393f; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 15px; text-decoration: none; color: #dcddde; }
-.guild-card img { width: 64px; height: 64px; border-radius: 50%; }
-.card { background: #36393f; padding: 20px; border-radius: 8px; }
-.config-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
-.top-list { background: #36393f; padding: 15px; border-radius: 8px; }
-.top-user { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #40444b; }
+html,
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+    padding: 20px;
+}
+
+.light-bg {
+    background-color: #36393e;
+}
+
+.dark-bg {
+    background-color: #282b30;
+}
+
+.darker-bg {
+    background-color: #1e2124;
+}
+
+.round {
+    border-radius: 15px;
+}
+
+.card-discord {
+    background-color: #2f3136;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.card-discord:hover {
+    background-color: #36393f;
+    transform: translateY(-8px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 2px solid #5865F2 !important;
+    box-shadow: 0 0 20px rgba(88, 101, 242, 0.5);
+}
+
+.card-body-discord {
+    background-color: #36393e;
+    color: #dcddde;
+}

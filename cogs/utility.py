@@ -36,12 +36,13 @@ class GlobalCommands(commands.Cog):
     @commands.hybrid_command(name="sync", description="Force sync slash commands (owner only)")
     @commands.is_owner()
     async def sync(self, ctx: commands.Context):
-        await ctx.defer(ephemeral=True)
+        initial_msg = await ctx.send("⏳ Syncing slash commands...", ephemeral=True)
         try:
             synced = await self.bot.tree.sync()
-            await ctx.send(f"Synced {len(synced)} commands globally.", ephemeral=True)
+            await initial_msg.edit(content=f"✅ {len(synced)} Slash commands synced successfully!")
         except Exception as e:
-            await ctx.send(f"Sync failed: {e}", ephemeral=True)
-
+            await initial_msg.edit(content=f"❌ Failed to sync slash commands: {e}")
+            print(f"Error syncing commands: {e}")
+            
 async def setup(bot):
     await bot.add_cog(GlobalCommands(bot))

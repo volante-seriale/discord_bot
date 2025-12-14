@@ -198,6 +198,8 @@ def run_bot():
     async def on_ready():
         print(f"Bot logged in as {bot.user} ({bot.user.id})")
         print("Loading cogs...")
+        print("------------------------------")
+
         try:
             await bot.load_extension("cogs.leveling")
             print("Leveling cog loaded")
@@ -209,6 +211,9 @@ def run_bot():
             print("Member ID cog loaded")
             await bot.load_extension("cogs.utility")
             print("Utility cog loaded")
+            await bot.load_extension("cogs.casino")
+            print("Casino cog loaded")
+            print("------------------------------")
 
             await bot.tree.sync()
             print("Slash commands synced globally")

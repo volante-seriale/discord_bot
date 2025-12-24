@@ -230,4 +230,4 @@ if __name__ == "__main__":
     print("="*60)
     threading.Thread(target=run_bot, daemon=True).start()
     print("Bot started → Flask running at http://localhost:5000")
-    app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)

@@ -157,14 +157,14 @@ class Casino(commands.Cog):
     async def casino(
         self,
         ctx: commands.Context,
-        dateTime: str,
+        date_time: str,
         entry_cost: int = 0,
         canale: Optional[discord.TextChannel] = None
     ):
         canale = canale or ctx.channel
 
         embed = self._build_party_embed(
-            {"data_ora": dateTime, "assignments": {}, "creator_id": ctx.author.id},
+            {"data_ora": date_time, "assignments": {}, "creator_id": ctx.author.id},
             ctx.guild,
             0
         )
@@ -175,14 +175,14 @@ class Casino(commands.Cog):
         self.active_casinos[msg.id] = {
             "channel_id": canale.id,
             "guild_id": ctx.guild.id,
-            "data_ora": dateTime,
+            "data_ora": date_time,
             "assignments": {},
             "creator_id": ctx.author.id,
             "cost": entry_cost,
         }
         self._save_casinos()
 
-        await ctx.send(f"'Casino' event created in {canale.mention} for **{dateTime}**!", ephemeral=True)
+        await ctx.send(f"'Casino' event created in {canale.mention} for **{date_time}**!", ephemeral=True)
 
     @commands.hybrid_command(name="close-casino", description="Manually closes an active Casino event")
     @commands.has_permissions(administrator=True)

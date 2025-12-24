@@ -49,6 +49,7 @@ For now configurable only through in-app commands.
 - Python 3.11+
 - `discord.py >= v2.3.0`
 - `python-dotenv`
+- `requests==2.32.3`
 
 ## Installation
 

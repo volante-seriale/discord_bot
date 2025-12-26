@@ -54,8 +54,12 @@ class Leveling(commands.Cog):
             json.dump(self.config_data, f, indent=4)
 
     def get_guild_config(self, guild_id: str):
+        guild_id = str(guild_id)
+        guild = self.bot.get_guild(int(guild_id))
         if guild_id not in self.config_data:
+            guild_name = guild.name if guild else "Unknown",
             self.config_data[guild_id] = {
+                "guild_name": guild_name,
                 "level_up_channel_id": None,
                 "level_up_channel_name": None,
                 "invite_link": None,

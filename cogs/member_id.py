@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import io
 
@@ -8,6 +9,7 @@ class RoleIDListerHybrid(commands.Cog):
 
     @commands.hybrid_command(name="list-id", description="Lists the IDs of all members with a specified role.")
     @commands.has_permissions(administrator=True)
+    @app_commands.describe(target_role="The role to list member IDs for")
     async def list_member_ids(self, ctx: commands.Context, target_role: discord.Role):     
         
         # 1. Defer the response
@@ -20,9 +22,7 @@ class RoleIDListerHybrid(commands.Cog):
         # 2. Member ID extraction
         member_info = []
         for member in target_role.members:
-            # Formatta la riga come "Nome (ID: XXXXXXXXXXXXXXX)" o simile
             member_info.append(f"ID: {member.id} | Name: {member.display_name} ")
-        
         member_count = len(member_info)
 
         # 3. File Creation and Sending

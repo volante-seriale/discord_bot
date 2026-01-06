@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 from typing import Dict, Any, Optional
 import json
@@ -93,7 +94,7 @@ class TempVoice(commands.Cog):
             self.active_channels[new_channel.id] = member.id
             print(f"TempVoice: Created temp channel {new_channel.id} for member {member.id} in guild {guild.id}.")
 
-        except  discord.Forbidden:
+        except discord.Forbidden:
             print(f"TempVoice Error: Missing permissions to create channel in guild {guild.id}.")
             if member.voice and member.voice.channel == source_channel:
                 await member.move_to(None)

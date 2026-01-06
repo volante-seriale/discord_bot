@@ -319,6 +319,7 @@ class Casino(commands.Cog):
     @commands.has_permissions(administrator=True)
     @app_commands.describe(message_id="Message ID of the Casino event to close")
     async def close_casino(self, ctx: commands.Context, message_id: str):
+        message_id = int(message_id)
         if message_id not in self.active_casinos:
             await ctx.send("No active event found with that message ID.", ephemeral=True)
             return

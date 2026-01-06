@@ -261,7 +261,7 @@ class Casino(commands.Cog):
             embed.description = f"🎟️ **Free entry**\n\n{base}"
 
         assignments = casino_data["assignments"]
-        for party_num, (start, end) in enumerate([(1,30), (31,60), (61,90)], 1):
+        for party_num, (start, end) in enumerate([(1,34), (35,67), (68,100)], 1):
             lines = []
             for n in range(start, end+1):
                 ns = str(n)

@@ -7,6 +7,81 @@ from datetime import datetime
 from typing import Dict, Optional
 
 BUTTON_CUSTOM_ID = "casino:select_number"
+APPROVE_CUSTOM_ID = "casino:approve"
+REJECT_CUSTOM_ID = "casino:reject"
+
+class ValidationView(discord.ui.View):
+    def __init__(self, user_id: int, number: str):
+        super().__init__(timeout=None)
+        self.user_id = user_id
+        self.number = number
+
+    @discord.ui.button(label="Approva", style=discord.ButtonStyle.green, custom_id=APPROVE_CUSTOM_ID)
+    async def approve(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.handle_decision(interaction, approved=True)
+
+    @discord.ui.button(label="Rifiuta", style=discord.ButtonStyle.red, custom_id=REJECT_CUSTOM_ID)
+    async def reject(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.handle_decision(interaction, approved=False)
+
+    async def handle_decision(self, interaction: discord.Interaction, approved: bool):
+        casino_cog = interaction.client.get_cog("Casino")
+        if not casino_cog:
+            return
+
+        found = False
+        for msg_id, data in list(casino_cog.pending_validations.items()):
+            if (data["user_id"] == self.user_id and
+                data["number"] == self.number and
+                data["guild_id"] == interaction.guild.id):
+                found = True
+                del casino_cog.pending_validations[msg_id]
+                casino_cog._save_pending()
+                break
+
+        if not found:
+            await interaction.response.send_message("Handled.", ephemeral=True)
+            return
+
+        user = interaction.guild.get_member(self.user_id)
+        user_name = user.display_name if user else "User unknown"
+
+        if approved:
+            # Confirms the number
+            casino_data = casino_cog.active_casinos.get(data["message_id"])
+            if casino_data:
+                casino_data["assignments"][self.number] = str(self.user_id)
+                casino_cog._save_casinos()
+
+                # Update embed
+                channel = interaction.guild.get_channel(casino_data["channel_id"])
+                if channel:
+                    try:
+                        msg = await channel.fetch_message(data["message_id"])
+                        occupied = len(casino_data["assignments"])
+                        new_embed = casino_cog._build_party_embed(casino_data, interaction.guild, occupied)
+                        await msg.edit(embed=new_embed)
+                    except:
+                        pass
+
+            await interaction.response.send_message(f"✅ Number **{self.number}** got approved for {user_name}!", ephemeral=True)
+            if user:
+                try:
+                    await user.send(f"✅ The picked number **{self.number}** for the Casino has been **approved**!")
+                except:
+                    pass
+        else:
+            await interaction.response.send_message(f"❌ Number **{self.number}** rejected for {user_name}.", ephemeral=True)
+            if user:
+                try:
+                    await user.send(f"❌ The picked number **{self.number}** for the Casino has been **rejected**.")
+                except:
+                    pass
+
+        # Disable buttons
+        for item in self.children:
+            item.disabled = True
+        await interaction.message.edit(view=self)
 
 class CasinoSelectModal(discord.ui.Modal, title="Choose your lucky number"):
     numero = discord.ui.TextInput(
@@ -105,26 +180,23 @@ class Casino(commands.Cog):
             json.dump(self.active_casinos, f, indent=4)
 
     def _register_persistent_views(self):
-        if not self.active_casinos:
-            return
-        for _ in self.active_casinos.keys():
-            self.bot.add_view(CasinoButton())
-
+        self.bot.add_view(CasinoButton())
+        
     def _build_party_embed(self, casino_data: Dict, guild: discord.Guild, occupied: int) -> discord.Embed:
         embed = discord.Embed(
-            title=f"Casino Night - {casino_data['data_ora']}",
+            title=f"🎰 Casino Night - {casino_data['data_ora']}",
             color=discord.Color.gold(),
             timestamp=datetime.now()
         )
         embed.set_footer(text=f"Event created by {guild.get_member(casino_data['creator_id']).display_name if guild.get_member(casino_data['creator_id']) else 'Unknown'}")
 
-        costo = casino_data.get('cost', None)  # Recupera il costo, se presente
-        base_description = f"**Numbers taken: {occupied}/100**\nClick the button to choose a free number!"
-
-        if costo:
-            embed.description = f"💰 **Entry cost: {costo}**\n\n{base_description}"
+        costo = casino_data.get("cost", 0)
+        base_description = f"**Numbers taken: {occupied}/100**\nClick the button below to choose your number!"
+        
+        if costo > 0:
+            embed.description = f"💰 Entry Cost: **{costo} silver**\n\n{base_description}"
         else:
-            embed.description = base_description
+            embed.description = f"🎟️ **Free entry**\n\n{base_description}"
 
         assignments = casino_data["assignments"]
 

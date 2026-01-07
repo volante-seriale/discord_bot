@@ -1,10 +1,10 @@
 # cogs/casino.py
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import app_commands
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Optional
 
 BUTTON_CUSTOM_ID = "casino:select_number"
@@ -237,6 +237,55 @@ class Casino(commands.Cog):
     def get_validation_channel(self, guild_id: int) -> Optional[int]:
         return self.validation_channels.get(str(guild_id))
 
+    @tasks.loop(minutes=30)
+    async def cleanup_expired_events(self):
+        now = datetime.now()
+        to_remove = []
+        for msg_id, data in self.active_casinos.items():
+            event_datetime_str = data.get("data_ora")
+            try:
+                event_datetime = datetime.strptime(event_datetime_str, "%d/%m/%Y %H:%M")
+                expiration_time = event_datetime + timedelta(hours=4)
+                if now > expiration_time:
+                    to_remove.append((msg_id, data))
+            except ValueError:
+                print(f"Invalid date format for event {msg_id}: {event_datetime_str}")
+                continue
+        
+        for msg_id, data in to_remove:
+            channel_id = data["channel_id"]
+            guild_id = data["guild_id"]
+            channel = self.bot.get_channel(channel_id)
+            guild = self.bot.get_guild(guild_id)
+            
+            if channel:
+                try:
+                    msg = await channel.fetch_message(msg_id)
+                    embed = msg.embeds[0] if msg.embeds else discord.Embed(title="Casino Night")
+                    embed.color = discord.Color.dark_gray()
+                    embed.title = f"⏰ Casino Night - {data['data_ora']} (EXPIRED)"
+                    embed.set_footer(text="This event has expired and is no longer active.")
+
+                    view = CasinoButton()
+                    for child in view.children:
+                        child.disabled = True
+
+                    await msg.edit(embed=embed, view=view)
+                except discord.NotFound:
+                    pass
+                except Exception as e:
+                    print(f"[Casino Auto Cleanup] Errore editing message {msg_id}: {e}") 
+            
+            self.active_casinos.pop(msg_id, None)
+            print(f"[Casino Auto Cleanup] Removed expired event {msg_id}")
+        
+        if to_remove:
+            self._save_casinos()
+    
+    @cleanup_expired_events.before_loop
+    async def before_cleanup(self):
+        await self.bot.wait_until_ready()
+        
     # --- PERSISTENT VIEWS ---
     def _register_persistent_views(self):
         self.bot.add_view(CasinoButton())
@@ -277,7 +326,7 @@ class Casino(commands.Cog):
     @commands.hybrid_command(name="casino", description="Create a Casino Night event")
     @commands.has_permissions(administrator=True)
     @app_commands.describe(
-        date_time="Date and time of the event (DD/MM/YY hh:mm)",
+        date_time="Date and time of the event (DD/MM/YYYY hh:mm)",
         entry_cost="Entry cost (default: 0 for free)",
         channel="Channel to post the event (default: current channel)"
     )
@@ -345,4 +394,6 @@ class Casino(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Casino(bot))
+    cog = Casino(bot)
+    await bot.add_cog(cog)
+    cog.cleanup_expired_events.start()

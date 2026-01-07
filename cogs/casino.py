@@ -252,7 +252,7 @@ class Casino(commands.Cog):
         creator = guild.get_member(casino_data['creator_id'])
         embed.set_footer(text=f"Created by {creator.display_name if creator else 'Unknown'}")
 
-        cost = casino_data.get("cost", 0)
+        cost = casino_data.get("entry_cost", 0)
         base = f"**Numbers taken: {occupied}/100**\nClick the button below to choose your number!"
 
         if cost > 0:
@@ -277,7 +277,7 @@ class Casino(commands.Cog):
     @commands.hybrid_command(name="casino", description="Create a Casino Night event")
     @commands.has_permissions(administrator=True)
     @app_commands.describe(
-        date_time="Date and time of the event DD/MM/YY 20:00)",
+        date_time="Date and time of the event (DD/MM/YY hh:mm)",
         entry_cost="Entry cost (default: 0 for free)",
         channel="Channel to post the event (default: current channel)"
     )

@@ -252,11 +252,11 @@ class Casino(commands.Cog):
         creator = guild.get_member(casino_data['creator_id'])
         embed.set_footer(text=f"Created by {creator.display_name if creator else 'Unknown'}")
 
-        cost = casino_data.get("entry_cost", 0)
+        entry_cost = casino_data.get("entry_cost", 0)
         base = f"**Numbers taken: {occupied}/100**\nClick the button below to choose your number!"
 
-        if cost > 0:
-            embed.description = f"💰 **Entry cost: {cost}€**\n\n{base}"
+        if entry_cost > 0:
+            embed.description = f"💰 **Entry cost: {entry_cost}€**\n\n{base}"
         else:
             embed.description = f"🎟️ **Free entry**\n\n{base}"
 
@@ -293,7 +293,7 @@ class Casino(commands.Cog):
             "data_ora": date_time,
             "assignments": {},
             "creator_id": ctx.author.id,
-            "cost": entry_cost,
+            "entry_cost": entry_cost,
         }
         self._save_casinos()
         await ctx.send(f"Casino event created in {channel.mention}!", ephemeral=True)

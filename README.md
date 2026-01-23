@@ -76,9 +76,11 @@ Root
 ├── bot.py                     → Main bot file
 ├── cogs/
 │   ├── leveling.py            → XP system, config & level-up commands
-│   ├── tempvoice.py           → Temporary voice channels
+│   ├── lucky_events           → Used to create small events with the extraction of a number
+│   ├── member_id.py           → /list-id command
 │   ├── moderation.py          → Goodbye messages
-│   └── member_id.py           → /list-id command
+│   ├── tempvoice.py           → Temporary voice channels
+│   └── utility.py             → Various slash commands with some basic functions
 ├── data/                      → (auto-created on first launch)
 │   ├── levels.json            → XP and level data per user/server
 │   ├── config.json            → Leveling configuration per server

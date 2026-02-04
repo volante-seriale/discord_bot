@@ -36,7 +36,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback-secret-change-me")
 #   ---- OAuth2 Configuration ----
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-REDIRECT_URI = "https://oviparous-dan-overnarrow.ngrok-free.dev/callback"
+REDIRECT_URI = "https://http://13.60.216.223/callback"
 AUTH_URL = f"https://discord.com/oauth2/authorize?client_id={CLIENT_ID}&redirect_uri={  REDIRECT_URI  }&response_type=code&scope=identify%20guilds"
 TOKEN_URL = "https://discord.com/api/oauth2/token"
 bot = None
@@ -226,8 +226,10 @@ def run_bot():
 #   ---- Main Entry Point ----
 if __name__ == "__main__":
     print("="*60)
-    print("STARTING BOT + DASHBOARD - FINAL VERSION")
+    print("STARTING BOT + DASHBOARD ")
     print("="*60)
     threading.Thread(target=run_bot, daemon=True).start()
-    print("Bot started → Flask running at http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+    print("Bot started → Flask running at https://volanbotte.duckdns.org")
+    app.run(host="0.0.0.0", port=443, ssl_context=(
+            '/etc/letsencrypt/live/volanbotte.duckdns.org/fullchain.pem',
+            '/etc/letsencrypt/live/volanbotte.duckdns.org/privkey.pem'), debug=False)

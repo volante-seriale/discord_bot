@@ -36,7 +36,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback-secret-change-me")
 #   ---- OAuth2 Configuration ----
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-REDIRECT_URI = "https://http://13.60.216.223/callback"
+REDIRECT_URI = "https://volanbotte.duckdns.org/callback"
 AUTH_URL = f"https://discord.com/oauth2/authorize?client_id={CLIENT_ID}&redirect_uri={  REDIRECT_URI  }&response_type=code&scope=identify%20guilds"
 TOKEN_URL = "https://discord.com/api/oauth2/token"
 bot = None

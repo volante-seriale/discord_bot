@@ -36,7 +36,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback-secret-change-me")
 #   ---- OAuth2 Configuration ----
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-REDIRECT_URI = "https://volanbotte.duckdns.org"
+REDIRECT_URI = "https://volanbotte.duckdns.org/callback"
 AUTH_URL = f"https://discord.com/oauth2/authorize?client_id={CLIENT_ID}&redirect_uri={  REDIRECT_URI  }&response_type=code&scope=identify%20guilds"
 TOKEN_URL = "https://discord.com/api/oauth2/token"
 bot = None
@@ -65,7 +65,7 @@ def login():
 def callback():
     code = request.args.get("code")
     if not code:
-        return "Authorization error", 400
+        return "Authorization error: no code", 400
 
     data = {
         "client_id": CLIENT_ID,
@@ -76,25 +76,28 @@ def callback():
         "scope": "identify guilds"
     }
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    r = requests.post(TOKEN_URL, data=data, headers=headers)
-    r.raise_for_status()
-    token = r.json()
 
-    user_info = requests.get("https://discord.com/api/users/@me", headers={"Authorization": f"Bearer {token['access_token']}"}).json()
-    guilds = requests.get("https://discord.com/api/users/@me/guilds", headers={"Authorization": f"Bearer {token['access_token']}"}).json()
-
-    # Keep only servers where the user is admin or owner
-    user_guilds = [g for g in guilds if (g["permissions"] & 0x8 == 0x8) or g["owner"]]
-
-    session["user"] = {
-        "id": user_info["id"],
-        "username": user_info["username"],
-        "discriminator": user_info.get("discriminator", "0"),
-        "avatar": user_info["avatar"],
-        "guilds": user_guilds
-    }
-    return redirect(url_for("dashboard"))
-
+    try:
+        r = requests.post(TOKEN_URL, data=data, headers=headers)
+        print(f"Discord token response status: {r.status_code}")     # ← log to console
+        print(f"Response body: {r.text}")                           # ← very useful!
+        
+        r.raise_for_status()  # will raise if not 2xx
+        token = r.json()
+        
+        # Rest of your code...
+        
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP error from Discord: {e}")
+        print(f"Response: {r.text if 'r' in locals() else 'No response'}")
+        return f"Discord OAuth error: {r.status_code} - {r.text}", 500
+    
+    except Exception as e:
+        print(f"Unexpected error in callback: {e}")
+        import traceback
+        traceback.print_exc()
+        return "Internal error during login", 500
+    
 @app.route("/dashboard")
 @login_required
 def dashboard():

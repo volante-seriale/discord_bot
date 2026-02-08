@@ -63,41 +63,59 @@ def login():
 
 @app.route("/callback")
 def callback():
-    code = request.args.get("code")
-    if not code:
-        return "Authorization error: no code", 400
-
-    data = {
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": REDIRECT_URI,
-        "scope": "identify guilds"
-    }
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
     try:
-        r = requests.post(TOKEN_URL, data=data, headers=headers)
-        print(f"Discord token response status: {r.status_code}")     # ← log to console
-        print(f"Response body: {r.text}")                           # ← very useful!
+        code = request.args.get("code")
+        if not code:
+            return "No code provided", 400
+
+        print("[CALLBACK] Received code:", code[:10] + "...")  # partial for safety
+
+        data = {
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": REDIRECT_URI,
+            "scope": "identify guilds"
+        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        print("[CALLBACK] Sending token request with redirect_uri:", REDIRECT_URI)
+
+        r = requests.post(TOKEN_URL, data=data, headers=headers, timeout=12)
         
-        r.raise_for_status()  # will raise if not 2xx
+        print("[CALLBACK] Token response status:", r.status_code)
+        print("[CALLBACK] Token response body:", r.text[:400])  # limit length
+
+        r.raise_for_status()
         token = r.json()
-        
-        # Rest of your code...
-        
-    except requests.exceptions.HTTPError as e:
-        print(f"HTTP error from Discord: {e}")
-        print(f"Response: {r.text if 'r' in locals() else 'No response'}")
-        return f"Discord OAuth error: {r.status_code} - {r.text}", 500
-    
+
+        print("[CALLBACK] Got access_token:", token.get("access_token", "???")[:10] + "...")
+
+        # ────────────────────────────────────────────────
+        # user info request
+        user_headers = {"Authorization": f"Bearer {token['access_token']}"}
+        user_info = requests.get("https://discord.com/api/users/@me", headers=user_headers).json()
+        print("[CALLBACK] User info:", user_info)
+
+        guilds = requests.get("https://discord.com/api/users/@me/guilds", headers=user_headers).json()
+        print("[CALLBACK] Guilds count:", len(guilds))
+
+        # your existing filtering + session code here
+        # ...
+
+        return redirect(url_for("dashboard"))
+
     except Exception as e:
-        print(f"Unexpected error in callback: {e}")
         import traceback
+        print("[CALLBACK CRASH]")
         traceback.print_exc()
-        return "Internal error during login", 500
-    
+        print("[CALLBACK] Request args:", request.args)
+        print("[CALLBACK] Exception type:", type(e).__name__)
+        print("[CALLBACK] Exception message:", str(e))
+        
+        return f"Callback error: {type(e).__name__} - {str(e)}", 500
+        
 @app.route("/dashboard")
 @login_required
 def dashboard():
